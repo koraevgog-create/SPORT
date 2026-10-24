@@ -2,6 +2,7 @@ const plan=[30,40,50,...Array.from({length:30},(_,i)=>60+i*15),500,500,500];
 const KEY='sport-v1'; let data=JSON.parse(localStorage.getItem(KEY)||'{"done":{},"reps":{},"metrics":{}}');
 if(!data.startDate)data.startDate=new Date().toISOString().slice(0,10);
 if(!data.metricHistory)data.metricHistory=[];
+if(!data.bestStreak)data.bestStreak=0;
 const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
 const target=d=>plan[Math.min(35,Math.floor((d-1)/10))];
 const doneCount=()=>Object.values(data.done).filter(Boolean).length;
@@ -24,7 +25,7 @@ function render(){
  let completed=0,ds='';for(let d=a;d<=b;d++){if(data.done[d])completed++;ds+=`<button class="day ${data.done[d]?'done':''} ${d===cur?'today':''}" data-day="${d}" title="${fmtLong(dayDate(d))}: ${target(d)} отжиманий">${d-a+1}<small>${fmt(dayDate(d))}</small></button>`}
  el.innerHTML=`<div class="month-head"><b>Месяц ${m}</b><span>${completed}/30 • ${target(a)}→${target(b)}</span></div><div class="days">${ds}</div>`;box.appendChild(el)}
  document.querySelectorAll('.day').forEach(x=>x.onclick=()=>{let d=+x.dataset.day;data.done[d]=!data.done[d];if(data.done[d]&&!data.reps[d])data.reps[d]=target(d);save();render()});
- renderHistory();renderMetricKpis();
+ renderHistory();renderMetricKpis();renderGame();renderAchievements();renderChart(activeChart);
 }
 function calcStreak(){let s=0,cur=current();for(let d=cur;d>=1;d--){if(data.done[d])s++;else if(d===cur)continue;else break}return s}
 function renderHistory(){const box=document.querySelector('#historyList');let rows=[];for(let d=360;d>=1&&rows.length<8;d--)if(data.done[d]||data.reps[d])rows.push(`<div class="history-row"><span class="history-status ${data.done[d]?'ok':''}">${data.done[d]?'✓':'•'}</span><div><b>День ${d}</b><small>${fmtLong(dayDate(d))}</small></div><div><span>Цель</span><b>${target(d)}</b></div><div><span>Факт</span><b>${data.reps[d]||0}</b></div></div>`);box.innerHTML=rows.length?rows.join(''):'<div class="empty-history">Здесь появятся завершённые тренировки. Первый день — начало истории.</div>'}
@@ -43,3 +44,35 @@ function closeMenu(){sidebar.classList.remove('open');overlay.classList.remove('
 menuBtn.onclick=()=>{sidebar.classList.toggle('open');overlay.classList.toggle('open')};overlay.onclick=closeMenu;
 document.querySelectorAll('.side-nav a').forEach(a=>a.addEventListener('click',closeMenu));
 const observed=['dashboard','pushups','modules'];window.addEventListener('scroll',()=>{let active='dashboard';for(const id of observed){const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<180)active=id}document.querySelectorAll('.nav-link').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active))});
+
+let activeChart='reps';
+function longestStreak(){let best=0,s=0;for(let d=1;d<=360;d++){if(data.done[d]){s++;best=Math.max(best,s)}else s=0}return best}
+function renderGame(){
+ const completed=doneCount(), total=Object.values(data.reps).reduce((a,b)=>a+(+b||0),0), xp=completed*100+Math.floor(total/10), level=Math.floor(xp/500)+1, into=xp%500;
+ data.bestStreak=Math.max(data.bestStreak||0,longestStreak());save();
+ const elapsed=Math.max(1,current()), rate=Math.round(completed/elapsed*100),best=Math.max(0,...Object.values(data.reps).map(Number));
+ document.querySelector('#gameLevel').textContent=level;document.querySelector('#xpNow').textContent=into;document.querySelector('#xpNext').textContent=500;document.querySelector('#xpBar').style.width=(into/5)+'%';
+ document.querySelector('#bestStreak').textContent=data.bestStreak+' дней';document.querySelector('#bestDay').textContent=best.toLocaleString('ru');document.querySelector('#completionRate').textContent=Math.min(100,rate)+'%';
+}
+const achievementDefs=[
+ ['first','ПЕРВЫЙ ШАГ','Завершить первую тренировку',()=>doneCount()>=1,'01'],
+ ['streak7','НЕДЕЛЯ БЕЗ СДАЧИ','Серия 7 дней подряд',()=>longestStreak()>=7,'07'],
+ ['thousand','ПЕРВАЯ 1000','Сделать 1 000 отжиманий суммарно',()=>Object.values(data.reps).reduce((a,b)=>a+(+b||0),0)>=1000,'1K'],
+ ['month','30 ДНЕЙ','Завершить 30 тренировок',()=>doneCount()>=30,'30'],
+ ['hundred','СОТНЯ','Выполнить 100 отжиманий за день',()=>Math.max(0,...Object.values(data.reps).map(Number))>=100,'100'],
+ ['tenk','10 000','Сделать 10 000 отжиманий суммарно',()=>Object.values(data.reps).reduce((a,b)=>a+(+b||0),0)>=10000,'10K'],
+ ['half','ПОЛПУТИ','Завершить 180 тренировок',()=>doneCount()>=180,'50%'],
+ ['fivehundred','500','Выполнить 500 отжиманий за день',()=>Math.max(0,...Object.values(data.reps).map(Number))>=500,'500'],
+ ['finish','360','Завершить годовой челлендж',()=>doneCount()>=360,'★']
+];
+function renderAchievements(){let open=0;document.querySelector('#achievements').innerHTML=achievementDefs.map(a=>{let yes=a[3]();if(yes)open++;return `<article class="achievement ${yes?'unlocked':'locked'}"><div class="badge">${a[4]}</div><div><b>${a[1]}</b><span>${a[2]}</span></div><i>${yes?'ОТКРЫТО':'ЗАКРЫТО'}</i></article>`}).join('');document.querySelector('#achievementCount').textContent=open+' / '+achievementDefs.length}
+function renderChart(type='reps'){
+ const svg=document.querySelector('#progressChart'),empty=document.querySelector('#chartEmpty');let pts=[];
+ if(type==='reps'){for(let d=1;d<=360;d++)if(data.reps[d])pts.push([d,+data.reps[d]])}
+ else{(data.metricHistory||[]).forEach((m,i)=>{if(m.weight)pts.push([i+1,+m.weight])})}
+ if(pts.length<2){svg.innerHTML='';empty.style.display='grid';return}empty.style.display='none';
+ const vals=pts.map(p=>p[1]),min=Math.min(...vals),max=Math.max(...vals),span=Math.max(1,max-min),n=Math.max(2,pts.length);
+ const xy=pts.map((p,i)=>[25+i/(n-1)*850,225-(p[1]-min)/span*180]);
+ const poly=xy.map(p=>p.join(',')).join(' ');svg.innerHTML=`<line x1="25" y1="225" x2="875" y2="225" class="axis"/><polyline points="${poly}" class="chart-line"/>${xy.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" class="chart-dot"><title>${type==='reps'?'Тренировка':'Замер'} ${pts[i][0]}: ${pts[i][1]}</title></circle>`).join('')}`;
+}
+document.querySelectorAll('.chart-tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.chart-tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');activeChart=b.dataset.chart;renderChart(activeChart)});
