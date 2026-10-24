@@ -9,7 +9,7 @@ function render(){
  document.querySelector('#yearPct').textContent=pct+'%';document.querySelector('#yearRing').style.background='conic-gradient(var(--accent) '+pct*3.6+'deg,#242a31 0deg)';
  document.querySelector('#streak').textContent=calcStreak()+' дней';document.querySelector('#totalReps').textContent=Object.values(data.reps).reduce((a,b)=>a+(+b||0),0).toLocaleString('ru');
  document.querySelector('#currentDay').textContent=cur+' / 360';document.querySelector('#todayTarget').textContent=t;document.querySelector('#levelNo').textContent=Math.floor((cur-1)/10)+1;
- document.querySelector('#overallBar').style.width=pct+'%';document.querySelector('#todayInput').value=data.reps[cur]||0;
+ document.querySelector('#overallBar').style.width=pct+'%';document.querySelector('#sideBar').style.width=pct+'%';document.querySelector('#sidePct').textContent=pct+'%';document.querySelector('#todayInput').value=data.reps[cur]||0;
  document.querySelector('#todayLabel').textContent='День '+cur+' из 360';
  document.querySelector('#phaseText').textContent=cur>330?'Финальная подготовка. Скоро контрольный месяц.':cur>30?'Рабочий блок. Объём растёт — техника остаётся чистой.':'Первый месяц. Формируем ежедневную привычку.';
  const box=document.querySelector('#months');box.innerHTML='';
@@ -27,3 +27,8 @@ document.querySelector('#themeBtn').onclick=()=>document.body.classList.toggle('
 document.querySelector('#saveMetrics').onclick=()=>{['weight','maxSet','waist','note'].forEach(k=>data.metrics[k]=document.querySelector('#'+k).value);save();alert('Показатели сохранены')};
 document.querySelector('#todayLabel').textContent=new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
 render();
+const menuBtn=document.querySelector('#menuBtn'),sidebar=document.querySelector('#sidebar'),overlay=document.querySelector('#sidebarOverlay');
+function closeMenu(){sidebar.classList.remove('open');overlay.classList.remove('open')}
+menuBtn.onclick=()=>{sidebar.classList.toggle('open');overlay.classList.toggle('open')};overlay.onclick=closeMenu;
+document.querySelectorAll('.side-nav a').forEach(a=>a.addEventListener('click',closeMenu));
+const observed=['dashboard','pushups','modules'];window.addEventListener('scroll',()=>{let active='dashboard';for(const id of observed){const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<180)active=id}document.querySelectorAll('.nav-link').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active))});
