@@ -7,10 +7,25 @@
 <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
-<header class="topbar"><a class="brand" href="#dashboard">SPORT<span>.</span></a><nav>
-<a href="#dashboard">Главная</a><a href="#pushups">Отжимания</a><a href="#modules">Дисциплины</a>
-</nav><button id="themeBtn" class="icon-btn" aria-label="Тема">◐</button></header>
-<main>
+<button class="mobile-menu" id="menuBtn" aria-label="Открыть меню">☰</button>
+<aside class="sidebar" id="sidebar">
+<div class="side-top"><a class="brand" href="#dashboard">SPORT<span>.</span></a><button id="themeBtn" class="icon-btn" aria-label="Тема">◐</button></div>
+<div class="side-label">ОБЗОР</div>
+<nav class="side-nav">
+<a class="nav-link active" href="#dashboard"><i>⌂</i><span>Главная</span></a>
+<a class="nav-link" href="#pushups"><i>↗</i><span>Отжимания</span><b>01</b></a>
+</nav>
+<div class="side-label">ДИСЦИПЛИНЫ</div>
+<nav class="side-nav secondary">
+<a href="#modules"><i>↑</i><span>Подтягивания</span><b>скоро</b></a>
+<a href="#modules"><i>◆</i><span>Пресс</span><b>скоро</b></a>
+<a href="#modules"><i>⌁</i><span>Бег</span><b>скоро</b></a>
+<a href="#modules"><i>↔</i><span>Растяжка</span><b>скоро</b></a>
+</nav>
+<div class="side-bottom"><div class="side-progress"><span>ГОДОВОЙ ЧЕЛЛЕНДЖ</span><div class="bar"><i id="sideBar"></i></div><small><b id="sidePct">0%</b> пути пройдено</small></div></div>
+</aside>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="app-shell"><main>
 <section id="dashboard" class="hero wrap">
 <div><p class="eyebrow">ЛИЧНАЯ СПОРТИВНАЯ СИСТЕМА</p><h1>Год, который<br><em>изменит форму.</em></h1>
 <p class="lead">Не мотивация на неделю. Система ежедневных действий, прогрессии и контроля результата.</p>
@@ -51,6 +66,6 @@
 </div><button id="saveMetrics" class="btn">Сохранить показатели</button>
 </section>
 </main>
-<footer><b>SPORT.</b><span>Система сильнее мотивации.</span></footer>
+<footer><b>SPORT.</b><span>Система сильнее мотивации.</span></footer></div>
 <script src="assets/js/app.js"></script>
 </body></html>
