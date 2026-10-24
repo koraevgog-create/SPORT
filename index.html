@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b0d10">
 <title>SPORT — личная спортивная система</title>
-<link rel="stylesheet" href="assets/css/styles.css?v=20261025-2">
+<link rel="stylesheet" href="assets/css/styles.css?v=20261025-3">
 </head>
 <body>
 <button class="mobile-menu" id="menuBtn" aria-label="Открыть меню">☰</button>
@@ -29,7 +29,7 @@
 <section id="dashboard" class="hero wrap">
 <div><p class="eyebrow">ЛИЧНАЯ СПОРТИВНАЯ СИСТЕМА</p><h1>Год, который<br><em>изменит форму.</em></h1>
 <p class="lead">Не мотивация на неделю. Система ежедневных действий, прогрессии и контроля результата.</p>
-<div class="hero-actions"><a class="btn primary" href="#pushups">Продолжить челлендж →</a><a class="btn" href="#modules">Все дисциплины</a></div></div>
+<div class="challenge-dates"><div><span>СТАРТ</span><b id="startDateLabel">—</b></div><div><span>ФИНИШ</span><b id="finishDateLabel">—</b></div><button class="date-edit" id="editStartBtn">Изменить дату</button></div><div class="hero-actions"><a class="btn primary" href="#pushups">Продолжить челлендж →</a><a class="btn" href="#modules">Все дисциплины</a></div></div>
 <div class="hero-card"><div class="ring" id="yearRing"><b id="yearPct">0%</b><span>год пройден</span></div>
 <div class="mini-grid"><div><span>Серия</span><b id="streak">0 дней</b></div><div><span>Всего</span><b id="totalReps">0</b></div><div><span>День</span><b id="currentDay">1 / 360</b></div><div><span>Цель</span><b>500/день</b></div></div></div>
 </section>
@@ -44,7 +44,7 @@
 <section id="pushups" class="wrap">
 <div class="section-head"><div><p class="eyebrow">ЧЕЛЛЕНДЖ №01</p><h2>От 30 до 500</h2></div><div class="big-number"><b>15 000</b><span>отжиманий в финальном месяце</span></div></div>
 <div class="progress-panel"><div class="bar"><i id="overallBar"></i></div><div class="bar-labels"><span>СТАРТ • 30</span><span>ФИНИШ • 500 × 30 ДНЕЙ</span></div></div>
-<div id="months" class="months"></div>
+<div id="months" class="months"></div><div class="history-panel"><div class="section-head compact"><div><p class="eyebrow">ЖУРНАЛ</p><h2>Последние тренировки</h2></div><div class="history-summary"><b id="planReps">0</b><span>плановых повторений пройдено</span></div></div><div id="historyList" class="history-list"></div></div>
 </section>
 <section id="modules" class="wrap modules-section">
 <div class="section-head"><div><p class="eyebrow">ЭКОСИСТЕМА SPORT</p><h2>Дисциплины</h2></div><p class="muted">Одна система — разные направления развития.</p></div>
@@ -58,7 +58,7 @@
 </div>
 </section>
 <section class="wrap metrics"><div class="section-head"><div><p class="eyebrow">КОНТРОЛЬ</p><h2>Трансформация</h2></div></div>
-<div class="metric-grid">
+<div class="metric-kpis"><div><span>Текущий вес</span><b id="weightKpi">—</b></div><div><span>Изменение</span><b id="weightDelta">—</b></div><div><span>Макс. подход</span><b id="maxKpi">—</b></div></div><div class="metric-grid">
 <label>Вес, кг<input id="weight" type="number" step=".1" placeholder="94"></label>
 <label>Максимум за подход<input id="maxSet" type="number" placeholder="—"></label>
 <label>Талия, см<input id="waist" type="number" step=".1" placeholder="—"></label>
@@ -67,5 +67,5 @@
 </section>
 </main>
 <footer><b>SPORT.</b><span>Система сильнее мотивации.</span></footer></div>
-<script src="assets/js/app.js?v=20261025-2"></script>
+<script src="assets/js/app.js?v=20261025-3"></script>
 </body></html>
