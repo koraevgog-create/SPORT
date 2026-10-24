@@ -1,30 +1,36 @@
 const plan=[30,40,50,...Array.from({length:30},(_,i)=>60+i*15),500,500,500];
-const KEY='sport-v1'; let data=JSON.parse(localStorage.getItem(KEY)||'{"done":{},"reps":{},"metrics":{}}');
+const KEY='sport-v1';
+let data;
+try{data=JSON.parse(localStorage.getItem(KEY)||'{"done":{},"reps":{},"metrics":{}}')}catch(e){data={done:{},reps:{},metrics:{}}}
+data.done=data.done&&typeof data.done==='object'?data.done:{};
+data.reps=data.reps&&typeof data.reps==='object'?data.reps:{};
+data.metrics=data.metrics&&typeof data.metrics==='object'?data.metrics:{};
 if(!data.startDate)data.startDate=new Date().toISOString().slice(0,10);
 if(!data.metricHistory)data.metricHistory=[];
 if(!data.bestStreak)data.bestStreak=0;
 const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
 const target=d=>plan[Math.min(35,Math.floor((d-1)/10))];
-const doneCount=()=>Object.values(data.done).filter(Boolean).length;
-const current=()=>Math.min(360,Math.max(1,Math.floor((new Date().setHours(0,0,0,0)-new Date(data.startDate+'T00:00:00').getTime())/86400000)+1));
+const doneCount=()=>Object.entries(data.done).filter(([d,v])=>v&&+d>=1&&+d<=360).length;
+const elapsedDoneCount=()=>Object.entries(data.done).filter(([d,v])=>v&&+d>=1&&+d<=current()).length;
+const current=()=>{const start=new Date(data.startDate+'T00:00:00');if(Number.isNaN(start.getTime()))return 1;return Math.min(360,Math.max(1,Math.floor((new Date().setHours(0,0,0,0)-start.getTime())/86400000)+1))};
 const dayDate=d=>{const x=new Date(data.startDate+'T00:00:00');x.setDate(x.getDate()+d-1);return x};
 const fmt=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
 const fmtLong=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
 function render(){
- const cur=current(),pct=Math.round(doneCount()/360*100),t=target(cur);
+ const cur=current(),pct=Math.round(elapsedDoneCount()/360*100),t=target(cur);
  document.querySelector('#yearPct').textContent=pct+'%';document.querySelector('#yearRing').style.background='conic-gradient(var(--accent) '+pct*3.6+'deg,#242a31 0deg)';
  document.querySelector('#streak').textContent=calcStreak()+' дней';document.querySelector('#totalReps').textContent=Object.values(data.reps).reduce((a,b)=>a+(+b||0),0).toLocaleString('ru');
  document.querySelector('#currentDay').textContent=cur+' / 360';document.querySelector('#todayTarget').textContent=t;document.querySelector('#levelNo').textContent=Math.floor((cur-1)/10)+1;
  document.querySelector('#overallBar').style.width=pct+'%';document.querySelector('#sideBar').style.width=pct+'%';document.querySelector('#sidePct').textContent=pct+'%';document.querySelector('#todayInput').value=data.reps[cur]||0;
  document.querySelector('#todayLabel').textContent=fmtLong(dayDate(cur))+' • День '+cur+' из 360';
  document.querySelector('#startDateLabel').textContent=fmtLong(dayDate(1));document.querySelector('#finishDateLabel').textContent=fmtLong(dayDate(360));
- document.querySelector('#planReps').textContent=Array.from({length:cur},(_,i)=>target(i+1)).reduce((a,b)=>a+b,0).toLocaleString('ru');
+ document.querySelector('#planReps').textContent=Array.from({length:cur},(_,i)=>i+1).filter(d=>data.done[d]).reduce((a,d)=>a+target(d),0).toLocaleString('ru');
  document.querySelector('#phaseText').textContent=cur>330?'Финальная подготовка. Скоро контрольный месяц.':cur>30?'Рабочий блок. Объём растёт — техника остаётся чистой.':'Первый месяц. Формируем ежедневную привычку.';
  const box=document.querySelector('#months');box.innerHTML='';
  for(let m=1;m<=12;m++){let a=(m-1)*30+1,b=m*30,el=document.createElement('article');el.className='month '+(cur>=a&&cur<=b?'current':'');
  let completed=0,ds='';for(let d=a;d<=b;d++){if(data.done[d])completed++;ds+=`<button class="day ${data.done[d]?'done':''} ${d===cur?'today':''}" data-day="${d}" title="${fmtLong(dayDate(d))}: ${target(d)} отжиманий">${d-a+1}<small>${fmt(dayDate(d))}</small></button>`}
  el.innerHTML=`<div class="month-head"><b>Месяц ${m}</b><span>${completed}/30 • ${target(a)}→${target(b)}</span></div><div class="days">${ds}</div>`;box.appendChild(el)}
- document.querySelectorAll('.day').forEach(x=>x.onclick=()=>{let d=+x.dataset.day;data.done[d]=!data.done[d];if(data.done[d]&&!data.reps[d])data.reps[d]=target(d);save();render()});
+ document.querySelectorAll('.day').forEach(x=>x.onclick=()=>{let d=+x.dataset.day;if(d>current())return;data.done[d]=!data.done[d];if(data.done[d]&&!data.reps[d])data.reps[d]=target(d);save();render()});
  renderHistory();renderMetricKpis();renderGame();renderAchievements();renderChart(activeChart);
 }
 function calcStreak(){let s=0,cur=current();for(let d=cur;d>=1;d--){if(data.done[d])s++;else if(d===cur)continue;else break}return s}
@@ -48,9 +54,9 @@ const observed=['dashboard','pushups','modules'];window.addEventListener('scroll
 let activeChart='reps';
 function longestStreak(){let best=0,s=0;for(let d=1;d<=360;d++){if(data.done[d]){s++;best=Math.max(best,s)}else s=0}return best}
 function renderGame(){
- const completed=doneCount(), total=Object.values(data.reps).reduce((a,b)=>a+(+b||0),0), xp=completed*100+Math.floor(total/10), level=Math.floor(xp/500)+1, into=xp%500;
+ const completed=elapsedDoneCount(), total=Object.entries(data.reps).filter(([d])=>+d>=1&&+d<=360).reduce((a,[,b])=>a+(Number.isFinite(+b)&&+b>0?+b:0),0), xp=completed*100+Math.floor(total/10), level=Math.floor(xp/500)+1, into=xp%500;
  data.bestStreak=Math.max(data.bestStreak||0,longestStreak());save();
- const elapsed=Math.max(1,current()), rate=Math.round(completed/elapsed*100),best=Math.max(0,...Object.values(data.reps).map(Number));
+ const elapsed=Math.max(1,current()), rate=Math.round(completed/elapsed*100),best=Math.max(0,...Object.entries(data.reps).filter(([d])=>+d>=1&&+d<=360).map(([,v])=>+v||0));
  document.querySelector('#gameLevel').textContent=level;document.querySelector('#xpNow').textContent=into;document.querySelector('#xpNext').textContent=500;document.querySelector('#xpBar').style.width=(into/5)+'%';
  document.querySelector('#bestStreak').textContent=data.bestStreak+' дней';document.querySelector('#bestDay').textContent=best.toLocaleString('ru');document.querySelector('#completionRate').textContent=Math.min(100,rate)+'%';
 }
@@ -72,7 +78,8 @@ function renderChart(type='reps'){
  else{(data.metricHistory||[]).forEach((m,i)=>{if(m.weight)pts.push([i+1,+m.weight])})}
  if(pts.length<2){svg.innerHTML='';empty.style.display='grid';return}empty.style.display='none';
  const vals=pts.map(p=>p[1]),min=Math.min(...vals),max=Math.max(...vals),span=Math.max(1,max-min),n=Math.max(2,pts.length);
- const xy=pts.map((p,i)=>[25+i/(n-1)*850,225-(p[1]-min)/span*180]);
+ const xMin=pts[0][0],xMax=pts[pts.length-1][0],xSpan=Math.max(1,xMax-xMin);
+ const xy=pts.map((p,i)=>[25+(p[0]-xMin)/xSpan*850,225-(p[1]-min)/span*180]);
  const poly=xy.map(p=>p.join(',')).join(' ');svg.innerHTML=`<line x1="25" y1="225" x2="875" y2="225" class="axis"/><polyline points="${poly}" class="chart-line"/>${xy.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" class="chart-dot"><title>${type==='reps'?'Тренировка':'Замер'} ${pts[i][0]}: ${pts[i][1]}</title></circle>`).join('')}`;
 }
 document.querySelectorAll('.chart-tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.chart-tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');activeChart=b.dataset.chart;renderChart(activeChart)});
