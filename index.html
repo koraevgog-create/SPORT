@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0d10">
+<title>SPORT — личная спортивная система</title>
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<header class="topbar"><a class="brand" href="#dashboard">SPORT<span>.</span></a><nav>
+<a href="#dashboard">Главная</a><a href="#pushups">Отжимания</a><a href="#modules">Дисциплины</a>
+</nav><button id="themeBtn" class="icon-btn" aria-label="Тема">◐</button></header>
+<main>
+<section id="dashboard" class="hero wrap">
+<div><p class="eyebrow">ЛИЧНАЯ СПОРТИВНАЯ СИСТЕМА</p><h1>Год, который<br><em>изменит форму.</em></h1>
+<p class="lead">Не мотивация на неделю. Система ежедневных действий, прогрессии и контроля результата.</p>
+<div class="hero-actions"><a class="btn primary" href="#pushups">Продолжить челлендж →</a><a class="btn" href="#modules">Все дисциплины</a></div></div>
+<div class="hero-card"><div class="ring" id="yearRing"><b id="yearPct">0%</b><span>год пройден</span></div>
+<div class="mini-grid"><div><span>Серия</span><b id="streak">0 дней</b></div><div><span>Всего</span><b id="totalReps">0</b></div><div><span>День</span><b id="currentDay">1 / 360</b></div><div><span>Цель</span><b>500/день</b></div></div></div>
+</section>
+<section class="wrap stats-section">
+<div class="section-head"><div><p class="eyebrow">СЕГОДНЯ</p><h2>Текущая тренировка</h2></div><span id="todayLabel"></span></div>
+<div class="today-card">
+<div><span class="pill">ОТЖИМАНИЯ • УРОВЕНЬ <i id="levelNo">1</i></span><h3><b id="todayTarget">30</b> отжиманий</h3><p id="phaseText">Первый 10-дневный блок. Начинаем спокойно.</p></div>
+<div class="counter"><button id="minusBtn">−</button><input id="todayInput" type="number" min="0" value="0"><button id="plusBtn">+</button><small>сделано сегодня</small></div>
+<button id="doneBtn" class="btn primary big">✓ Выполнено</button>
+</div>
+</section>
+<section id="pushups" class="wrap">
+<div class="section-head"><div><p class="eyebrow">ЧЕЛЛЕНДЖ №01</p><h2>От 30 до 500</h2></div><div class="big-number"><b>15 000</b><span>отжиманий в финальном месяце</span></div></div>
+<div class="progress-panel"><div class="bar"><i id="overallBar"></i></div><div class="bar-labels"><span>СТАРТ • 30</span><span>ФИНИШ • 500 × 30 ДНЕЙ</span></div></div>
+<div id="months" class="months"></div>
+</section>
+<section id="modules" class="wrap modules-section">
+<div class="section-head"><div><p class="eyebrow">ЭКОСИСТЕМА SPORT</p><h2>Дисциплины</h2></div><p class="muted">Одна система — разные направления развития.</p></div>
+<div class="modules">
+<article class="module active"><span>01</span><div class="module-icon">↗</div><h3>Отжимания</h3><p>Годовой путь 30 → 500 в день</p><b>АКТИВНО</b></article>
+<article class="module"><span>02</span><div class="module-icon">↑</div><h3>Подтягивания</h3><p>Сила спины и хвата</p><b>СКОРО</b></article>
+<article class="module"><span>03</span><div class="module-icon">◆</div><h3>Пресс</h3><p>Кор и выносливость</p><b>СКОРО</b></article>
+<article class="module"><span>04</span><div class="module-icon">⌁</div><h3>Бег</h3><p>Дистанция, темп, пульс</p><b>СКОРО</b></article>
+<article class="module"><span>05</span><div class="module-icon">↔</div><h3>Растяжка</h3><p>Мобильность и гибкость</p><b>СКОРО</b></article>
+<article class="module add"><span>+</span><h3>Новый модуль</h3><p>Архитектура готова к расширению</p></article>
+</div>
+</section>
+<section class="wrap metrics"><div class="section-head"><div><p class="eyebrow">КОНТРОЛЬ</p><h2>Трансформация</h2></div></div>
+<div class="metric-grid">
+<label>Вес, кг<input id="weight" type="number" step=".1" placeholder="94"></label>
+<label>Максимум за подход<input id="maxSet" type="number" placeholder="—"></label>
+<label>Талия, см<input id="waist" type="number" step=".1" placeholder="—"></label>
+<label>Заметка<input id="note" type="text" placeholder="Как себя чувствую?"></label>
+</div><button id="saveMetrics" class="btn">Сохранить показатели</button>
+</section>
+</main>
+<footer><b>SPORT.</b><span>Система сильнее мотивации.</span></footer>
+<script src="assets/js/app.js"></script>
+</body></html>
