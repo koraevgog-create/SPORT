@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b0d10">
 <title>SPORT — личная спортивная система</title>
-<link rel="stylesheet" href="assets/css/styles.css?v=20261025-3">
+<link rel="stylesheet" href="assets/css/styles.css?v=20261025-4">
 </head>
 <body>
 <button class="mobile-menu" id="menuBtn" aria-label="Открыть меню">☰</button>
@@ -33,6 +33,12 @@
 <div class="hero-card"><div class="ring" id="yearRing"><b id="yearPct">0%</b><span>год пройден</span></div>
 <div class="mini-grid"><div><span>Серия</span><b id="streak">0 дней</b></div><div><span>Всего</span><b id="totalReps">0</b></div><div><span>День</span><b id="currentDay">1 / 360</b></div><div><span>Цель</span><b>500/день</b></div></div></div>
 </section>
+<section class="wrap game-strip">
+<div class="game-card level-card"><div><span>УРОВЕНЬ SPORT</span><b id="gameLevel">1</b></div><div class="xp"><div><i id="xpBar"></i></div><small><b id="xpNow">0</b> / <span id="xpNext">500</span> XP</small></div></div>
+<div class="game-card"><span>ЛУЧШАЯ СЕРИЯ</span><b id="bestStreak">0 дней</b><small>личный рекорд</small></div>
+<div class="game-card"><span>РЕКОРД ЗА ДЕНЬ</span><b id="bestDay">0</b><small>отжиманий</small></div>
+<div class="game-card"><span>ВЫПОЛНЕНИЕ ПЛАНА</span><b id="completionRate">0%</b><small>за прошедшие дни</small></div>
+</section>
 <section class="wrap stats-section">
 <div class="section-head"><div><p class="eyebrow">СЕГОДНЯ</p><h2>Текущая тренировка</h2></div><span id="todayLabel"></span></div>
 <div class="today-card">
@@ -46,6 +52,8 @@
 <div class="progress-panel"><div class="bar"><i id="overallBar"></i></div><div class="bar-labels"><span>СТАРТ • 30</span><span>ФИНИШ • 500 × 30 ДНЕЙ</span></div></div>
 <div id="months" class="months"></div><div class="history-panel"><div class="section-head compact"><div><p class="eyebrow">ЖУРНАЛ</p><h2>Последние тренировки</h2></div><div class="history-summary"><b id="planReps">0</b><span>плановых повторений пройдено</span></div></div><div id="historyList" class="history-list"></div></div>
 </section>
+<section class="wrap achievements-section"><div class="section-head"><div><p class="eyebrow">ДОСТИЖЕНИЯ</p><h2>Путь силы</h2></div><p class="muted"><span id="achievementCount">0</span> открыто</p></div><div id="achievements" class="achievements"></div></section>
+<section class="wrap chart-section"><div class="section-head"><div><p class="eyebrow">АНАЛИТИКА</p><h2>Динамика</h2></div><div class="chart-tabs"><button class="active" data-chart="reps">Отжимания</button><button data-chart="weight">Вес</button></div></div><div class="chart-card"><div id="chartEmpty" class="chart-empty">График появится после первых данных</div><svg id="progressChart" viewBox="0 0 900 260" preserveAspectRatio="none"></svg></div></section>
 <section id="modules" class="wrap modules-section">
 <div class="section-head"><div><p class="eyebrow">ЭКОСИСТЕМА SPORT</p><h2>Дисциплины</h2></div><p class="muted">Одна система — разные направления развития.</p></div>
 <div class="modules">
@@ -67,5 +75,5 @@
 </section>
 </main>
 <footer><b>SPORT.</b><span>Система сильнее мотивации.</span></footer></div>
-<script src="assets/js/app.js?v=20261025-3"></script>
+<script src="assets/js/app.js?v=20261025-4"></script>
 </body></html>
