@@ -8,6 +8,7 @@ data.metrics=data.metrics&&typeof data.metrics==='object'?data.metrics:{};
 if(!data.startDate)data.startDate=new Date().toISOString().slice(0,10);
 if(!data.metricHistory)data.metricHistory=[];
 if(!data.bestStreak)data.bestStreak=0;
+if(!data.sessions)data.sessions={};
 const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
 const target=d=>plan[Math.min(35,Math.floor((d-1)/10))];
 const doneCount=()=>Object.entries(data.done).filter(([d,v])=>v&&+d>=1&&+d<=360).length;
@@ -31,10 +32,10 @@ function render(){
  let completed=0,ds='';for(let d=a;d<=b;d++){if(data.done[d])completed++;ds+=`<button class="day ${data.done[d]?'done':''} ${d===cur?'today':''}" data-day="${d}" title="${fmtLong(dayDate(d))}: ${target(d)} отжиманий">${d-a+1}<small>${fmt(dayDate(d))}</small></button>`}
  el.innerHTML=`<div class="month-head"><b>Месяц ${m}</b><span>${completed}/30 • ${target(a)}→${target(b)}</span></div><div class="days">${ds}</div>`;box.appendChild(el)}
  document.querySelectorAll('.day').forEach(x=>x.onclick=()=>{let d=+x.dataset.day;if(d>current())return;data.done[d]=!data.done[d];if(data.done[d]&&!data.reps[d])data.reps[d]=target(d);save();render()});
- renderHistory();renderMetricKpis();renderGame();renderAchievements();renderChart(activeChart);
+ renderHistory();renderMetricKpis();renderGame();renderAchievements();renderChart(activeChart);renderSession();
 }
 function calcStreak(){let s=0,cur=current();for(let d=cur;d>=1;d--){if(data.done[d])s++;else if(d===cur)continue;else break}return s}
-function renderHistory(){const box=document.querySelector('#historyList');let rows=[];for(let d=360;d>=1&&rows.length<8;d--)if(data.done[d]||data.reps[d])rows.push(`<div class="history-row"><span class="history-status ${data.done[d]?'ok':''}">${data.done[d]?'✓':'•'}</span><div><b>День ${d}</b><small>${fmtLong(dayDate(d))}</small></div><div><span>Цель</span><b>${target(d)}</b></div><div><span>Факт</span><b>${data.reps[d]||0}</b></div></div>`);box.innerHTML=rows.length?rows.join(''):'<div class="empty-history">Здесь появятся завершённые тренировки. Первый день — начало истории.</div>'}
+function renderHistory(){const box=document.querySelector('#historyList');let rows=[];for(let d=360;d>=1&&rows.length<8;d--)if(data.done[d]||data.reps[d]){let s=data.sessions[d],detail=s&&s.sets?.length?`${s.sets.length} подх. • ${s.difficulty?'сложность '+s.difficulty+'/5':'без оценки'}`:'быстрая запись';rows.push(`<div class="history-row" data-history-day="${d}"><span class="history-status ${data.done[d]?'ok':''}">${data.done[d]?'✓':'•'}</span><div><b>День ${d}</b><small>${fmtLong(dayDate(d))} • ${detail}</small></div><div><span>Цель</span><b>${target(d)}</b></div><div><span>Факт</span><b>${data.reps[d]||0}</b></div></div>`)}box.innerHTML=rows.length?rows.join(''):'<div class="empty-history">Здесь появятся завершённые тренировки. Первый день — начало истории.</div>'}
 function renderMetricKpis(){let hist=data.metricHistory||[],last=hist.at(-1)||data.metrics||{},first=hist[0]||last;document.querySelector('#weightKpi').textContent=last.weight?last.weight+' кг':'—';document.querySelector('#maxKpi').textContent=last.maxSet||'—';let delta=(last.weight&&first.weight)?(+last.weight-+first.weight):null;document.querySelector('#weightDelta').textContent=delta===null?'—':(delta>0?'+':'')+delta.toFixed(1)+' кг'}
 document.querySelector('#plusBtn').onclick=()=>document.querySelector('#todayInput').value=(+document.querySelector('#todayInput').value||0)+5;
 document.querySelector('#minusBtn').onclick=()=>document.querySelector('#todayInput').value=Math.max(0,(+document.querySelector('#todayInput').value||0)-5);
@@ -83,3 +84,23 @@ function renderChart(type='reps'){
  const poly=xy.map(p=>p.join(',')).join(' ');svg.innerHTML=`<line x1="25" y1="225" x2="875" y2="225" class="axis"/><polyline points="${poly}" class="chart-line"/>${xy.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" class="chart-dot"><title>${type==='reps'?'Тренировка':'Замер'} ${pts[i][0]}: ${pts[i][1]}</title></circle>`).join('')}`;
 }
 document.querySelectorAll('.chart-tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.chart-tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');activeChart=b.dataset.chart;renderChart(activeChart)});
+
+let restSeconds=90,restLeft=90,timerId=null;
+const getSession=d=>data.sessions[d]||(data.sessions[d]={sets:[],difficulty:'',feeling:'',note:'',startedAt:null,finishedAt:null});
+function renderSession(){
+ const d=current(),s=getSession(d),sum=s.sets.reduce((a,b)=>a+(+b||0),0),goal=target(d),left=Math.max(0,goal-sum);
+ document.querySelector('#setsTotal').textContent=sum;document.querySelector('#setsCount').textContent=s.sets.length;document.querySelector('#remainingReps').textContent=left;
+ document.querySelector('#sessionBar').style.width=Math.min(100,sum/goal*100)+'%';
+ document.querySelector('#setsList').innerHTML=s.sets.length?s.sets.map((v,i)=>`<div class="set-chip"><span>Подход ${i+1}</span><b>${v}</b><button data-remove-set="${i}" title="Удалить">×</button></div>`).join(''):'<div class="empty-sets">Подходов пока нет</div>';
+ document.querySelector('#difficulty').value=s.difficulty||'';document.querySelector('#feeling').value=s.feeling||'';document.querySelector('#sessionNote').value=s.note||'';
+ document.querySelectorAll('[data-remove-set]').forEach(b=>b.onclick=()=>{s.sets.splice(+b.dataset.removeSet,1);syncSessionReps(d,s);save();render()});
+}
+function syncSessionReps(d,s){const sum=s.sets.reduce((a,b)=>a+(+b||0),0);if(sum>0)data.reps[d]=sum;else if(!data.done[d])delete data.reps[d]}
+document.querySelector('#addSetBtn').onclick=()=>{const d=current(),s=getSession(d),inp=document.querySelector('#setInput'),v=Math.floor(+inp.value);if(!Number.isFinite(v)||v<1||v>1000)return;if(!s.startedAt)s.startedAt=new Date().toISOString();s.sets.push(v);syncSessionReps(d,s);inp.value='';save();render();inp.focus()};
+document.querySelector('#setInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.querySelector('#addSetBtn').click()});
+['difficulty','feeling','sessionNote'].forEach(id=>document.querySelector('#'+id).addEventListener('change',e=>{const s=getSession(current());s[id==='sessionNote'?'note':id]=e.target.value;save()}));
+document.querySelector('#finishSessionBtn').onclick=()=>{const d=current(),s=getSession(d),sum=s.sets.reduce((a,b)=>a+(+b||0),0);if(!sum){alert('Сначала добавь хотя бы один подход.');return}if(sum<target(d)&&!confirm(`Сейчас выполнено ${sum} из ${target(d)}. Завершить тренировку как выполненную?`))return;s.finishedAt=new Date().toISOString();data.reps[d]=sum;data.done[d]=true;save();render()};
+function paintTimer(){document.querySelector('#timerDisplay').textContent=String(Math.floor(restLeft/60)).padStart(2,'0')+':'+String(restLeft%60).padStart(2,'0')}
+document.querySelectorAll('[data-rest]').forEach(b=>b.onclick=()=>{if(timerId)return;document.querySelectorAll('[data-rest]').forEach(x=>x.classList.remove('active'));b.classList.add('active');restSeconds=+b.dataset.rest;restLeft=restSeconds;paintTimer()});
+document.querySelector('#timerBtn').onclick=()=>{const btn=document.querySelector('#timerBtn');if(timerId){clearInterval(timerId);timerId=null;restLeft=restSeconds;btn.textContent='▶ Старт';paintTimer();return}restLeft=restSeconds;paintTimer();btn.textContent='■ Стоп';timerId=setInterval(()=>{restLeft--;paintTimer();if(restLeft<=0){clearInterval(timerId);timerId=null;btn.textContent='▶ Старт';restLeft=restSeconds;setTimeout(paintTimer,800)}},1000)};
+paintTimer();
