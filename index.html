@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b0d10">
 <title>SPORT — личная спортивная система</title>
-<link rel="stylesheet" href="assets/css/styles.css?v=20261025-5">
+<link rel="stylesheet" href="assets/css/styles.css?v=20261025-6">
 </head>
 <body>
 <button class="mobile-menu" id="menuBtn" aria-label="Открыть меню">☰</button>
@@ -46,6 +46,17 @@
 <div class="counter"><button id="minusBtn">−</button><input id="todayInput" type="number" min="0" value="0"><button id="plusBtn">+</button><small>сделано сегодня</small></div>
 <button id="doneBtn" class="btn primary big">✓ Выполнено</button>
 </div>
+<div class="session-card">
+<div class="session-head"><div><p class="eyebrow">СЕССИЯ</p><h3>Подходы сегодня</h3></div><div class="remaining"><span>ОСТАЛОСЬ</span><b id="remainingReps">30</b></div></div>
+<div class="session-progress"><i id="sessionBar"></i></div>
+<div class="set-entry"><input id="setInput" type="number" min="1" inputmode="numeric" placeholder="Повторения в подходе"><button id="addSetBtn" class="btn primary">+ Добавить подход</button></div>
+<div id="setsList" class="sets-list"><div class="empty-sets">Подходов пока нет</div></div>
+<div class="session-tools">
+<div class="rest-timer"><span>ОТДЫХ</span><b id="timerDisplay">01:30</b><div><button data-rest="60">1:00</button><button data-rest="90" class="active">1:30</button><button data-rest="120">2:00</button><button id="timerBtn">▶ Старт</button></div></div>
+<div class="session-meta"><label>Сложность<select id="difficulty"><option value="">—</option><option value="1">1 — легко</option><option value="2">2</option><option value="3">3 — нормально</option><option value="4">4</option><option value="5">5 — тяжело</option></select></label><label>Самочувствие<select id="feeling"><option value="">—</option><option>Отлично</option><option>Хорошо</option><option>Нормально</option><option>Тяжело</option></select></label><label class="session-note">Заметка<input id="sessionNote" type="text" placeholder="Техника, ощущения, боль..."></label></div>
+</div>
+<div class="session-footer"><div><span>СУММА ПОДХОДОВ</span><b id="setsTotal">0</b></div><div><span>ПОДХОДОВ</span><b id="setsCount">0</b></div><button id="finishSessionBtn" class="btn primary">Завершить тренировку</button></div>
+</div>
 </section>
 <section id="pushups" class="wrap">
 <div class="section-head"><div><p class="eyebrow">ЧЕЛЛЕНДЖ №01</p><h2>От 30 до 500</h2></div><div class="big-number"><b>15 000</b><span>отжиманий в финальном месяце</span></div></div>
@@ -75,5 +86,5 @@
 </section>
 </main>
 <footer><b>SPORT.</b><span>Система сильнее мотивации.</span></footer></div>
-<script src="assets/js/app.js?v=20261025-5"></script>
+<script src="assets/js/app.js?v=20261025-6"></script>
 </body></html>
