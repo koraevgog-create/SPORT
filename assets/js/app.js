@@ -175,3 +175,6 @@ function renderDeepAnalytics(){
  const ms=document.querySelector('#monthlySummary');if(ms)ms.innerHTML=Array.from({length:12},(_,m)=>{const a=m*30+1,b=a+29,days=Array.from({length:30},(_,i)=>a+i),plan=days.reduce((s,d)=>s+target(d),0),actual=days.reduce((s,d)=>s+(+data.reps[d]||0),0),done=days.filter(d=>data.done[d]).length,pct=Math.round(actual/plan*100);return `<article class="month-summary"><div><span>МЕСЯЦ ${m+1}</span><b>${actual.toLocaleString('ru')} <i>/ ${plan.toLocaleString('ru')}</i></b></div><div class="month-summary-bar"><i style="width:${Math.min(100,pct)}%"></i></div><footer><span>${done}/30 дней</span><strong>${pct}% объёма</strong></footer></article>`}).join('');
 }
 document.querySelector('#showMeasurements').onclick=()=>{const hist=data.metricHistory||[];if(!hist.length){alert('История замеров пока пуста. Сохрани первый замер ниже.');return}alert(hist.slice().reverse().map((m,i)=>{const d=m.date?new Date(m.date).toLocaleDateString('ru-RU'):'—';return d+' • вес '+(m.weight||'—')+' кг • талия '+(m.waist||'—')+' см • максимум '+(m.maxSet||'—')}).join('\n'))};
+
+const sessionToggle=document.querySelector('#sessionToggle'),sessionCard=document.querySelector('#sessionCard');
+if(sessionToggle&&sessionCard)sessionToggle.onclick=()=>sessionCard.classList.toggle('collapsed');
