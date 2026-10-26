@@ -31,7 +31,14 @@ function render(){
  for(let m=1;m<=12;m++){let a=(m-1)*30+1,b=m*30,el=document.createElement('article');el.className='month '+(cur>=a&&cur<=b?'current':'');
  let completed=0,ds='';for(let d=a;d<=b;d++){if(data.done[d])completed++;ds+=`<button class="day ${data.done[d]?'done':''} ${d===cur?'today':''}" data-day="${d}" title="${fmtLong(dayDate(d))}: ${target(d)} отжиманий">${d-a+1}<small>${fmt(dayDate(d))}</small></button>`}
  el.innerHTML=`<div class="month-head"><b>Месяц ${m}</b><span>${completed}/30 • ${target(a)}→${target(b)}</span></div><div class="days">${ds}</div>`;box.appendChild(el)}
- document.querySelectorAll('.day').forEach(x=>x.onclick=()=>{let d=+x.dataset.day;if(d>current())return;data.done[d]=!data.done[d];if(data.done[d]&&!data.reps[d])data.reps[d]=target(d);save();render()});
+ document.querySelectorAll('.day').forEach(x=>{
+ x.onclick=()=>{let d=+x.dataset.day;if(d>current())return;
+   if(!data.done[d]){data.done[d]=true;if(!(+data.reps[d]>0))data.reps[d]=target(d)}
+   else{data.done[d]=false;delete data.reps[d];delete data.sessions[d]}
+   save();render()
+ };
+ x.oncontextmenu=e=>{e.preventDefault();let d=+x.dataset.day;if(d<=current())openDayEditor(d)}
+});
  renderHistory();renderMetricKpis();renderGame();renderAchievements();renderChart(activeChart);renderSession();
 }
 function calcStreak(){let s=0,cur=current();for(let d=cur;d>=1;d--){if(data.done[d])s++;else if(d===cur)continue;else break}return s}
@@ -104,3 +111,14 @@ function paintTimer(){document.querySelector('#timerDisplay').textContent=String
 document.querySelectorAll('[data-rest]').forEach(b=>b.onclick=()=>{if(timerId)return;document.querySelectorAll('[data-rest]').forEach(x=>x.classList.remove('active'));b.classList.add('active');restSeconds=+b.dataset.rest;restLeft=restSeconds;paintTimer()});
 document.querySelector('#timerBtn').onclick=()=>{const btn=document.querySelector('#timerBtn');if(timerId){clearInterval(timerId);timerId=null;restLeft=restSeconds;btn.textContent='▶ Старт';paintTimer();return}restLeft=restSeconds;paintTimer();btn.textContent='■ Стоп';timerId=setInterval(()=>{restLeft--;paintTimer();if(restLeft<=0){clearInterval(timerId);timerId=null;btn.textContent='▶ Старт';restLeft=restSeconds;setTimeout(paintTimer,800)}},1000)};
 paintTimer();
+
+function openDayEditor(d){
+ const oldVal=+data.reps[d]||target(d);
+ const raw=prompt(`${fmtLong(dayDate(d))} • День ${d}\nПлан: ${target(d)}\n\nСколько отжиманий фактически сделано?\n(Оставь ${oldVal}, если всё верно)`,String(oldVal));
+ if(raw===null)return;
+ const v=Math.floor(Number(String(raw).replace(',','.')));
+ if(!Number.isFinite(v)||v<0||v>5000){alert('Введи корректное количество отжиманий.');return}
+ if(v===0){data.done[d]=false;delete data.reps[d];delete data.sessions[d]}
+ else{data.reps[d]=v;data.done[d]=true;const s=getSession(d);if(!s.sets.length)s.sets=[v];s.finishedAt=s.finishedAt||new Date().toISOString()}
+ save();render();
+}
