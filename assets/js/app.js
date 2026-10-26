@@ -57,12 +57,11 @@ function render(){
  document.querySelector('#phaseText').textContent=cur>330?'Финальная подготовка. Скоро контрольный месяц.':cur>30?'Рабочий блок. Объём растёт — техника остаётся чистой.':'Первый месяц. Формируем ежедневную привычку.';
  const box=document.querySelector('#months');box.innerHTML='';
  for(let m=1;m<=12;m++){let a=(m-1)*30+1,b=m*30,el=document.createElement('article');el.className='month '+(cur>=a&&cur<=b?'current':'');
- let completed=0,ds='';for(let d=a;d<=b;d++){if(data.done[d])completed++;ds+=`<button class="day ${data.done[d]?'done':''} ${d===cur?'today':''}" data-day="${d}" title="${fmtLong(dayDate(d))}: ${target(d)} отжиманий">${d-a+1}<small>${fmt(dayDate(d))}</small></button>`}
+ let completed=0,ds='';for(let d=a;d<=b;d++){if(data.done[d])completed++;const reps=+data.reps[d]||0,state=data.done[d]?'done':reps>0?'partial':d>cur?'future':'';ds+=`<button class="day ${state} ${d===cur?'today':''}" data-day="${d}" title="${fmtLong(dayDate(d))}: план ${target(d)} • факт ${reps}">${d-a+1}<small>${reps?reps+' / '+target(d):fmt(dayDate(d))}</small></button>`}
  el.innerHTML=`<div class="month-head"><b>Месяц ${m}</b><span>${completed}/30 • ${target(a)}→${target(b)}</span></div><div class="days">${ds}</div>`;box.appendChild(el)}
  document.querySelectorAll('.day').forEach(x=>{
  x.onclick=()=>{let d=+x.dataset.day;if(d>current())return;
-   if(!data.done[d]){setDayReps(d,target(d));render()}
-   else openDayEditor(d)
+   if(data.reps[d]>0||data.done[d])openDayEditor(d);else{setDayReps(d,target(d));render()}
  };
  x.oncontextmenu=e=>{e.preventDefault();let d=+x.dataset.day;if(d<=current())openDayEditor(d)}
 });
@@ -89,7 +88,7 @@ const menuBtn=document.querySelector('#menuBtn'),sidebar=document.querySelector(
 function closeMenu(){sidebar.classList.remove('open');overlay.classList.remove('open')}
 menuBtn.onclick=()=>{sidebar.classList.toggle('open');overlay.classList.toggle('open')};overlay.onclick=closeMenu;
 document.querySelectorAll('.side-nav a').forEach(a=>a.addEventListener('click',closeMenu));
-const observed=['dashboard','pushups','modules'];window.addEventListener('scroll',()=>{let active='dashboard';for(const id of observed){const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<180)active=id}document.querySelectorAll('.nav-link').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active))});
+const observed=['dashboard','pushups','analytics','transformation','modules'];window.addEventListener('scroll',()=>{let active='dashboard';for(const id of observed){const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<180)active=id}document.querySelectorAll('.nav-link').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active))});
 
 let activeChart='reps';
 function longestStreak(){let best=0,s=0;for(let d=1;d<=360;d++){if(data.done[d]){s++;best=Math.max(best,s)}else s=0}return best}
@@ -199,3 +198,6 @@ document.querySelector('#importData').onchange=e=>{const file=e.target.files?.[0
 
 function paintSetsMismatch(){const e=document.querySelector('#setsMismatch');if(!e)return;const raw=document.querySelector('#editDaySets').value.trim(),sets=raw?raw.split(/[,;+ ]+/).map(Number).filter(v=>Number.isFinite(v)&&v>0):[],sum=sets.reduce((a,b)=>a+b,0),fact=+document.querySelector('#editDayReps').value||0;e.textContent=sets.length?(sum===fact?'Сумма подходов совпадает: '+sum:'Сумма подходов: '+sum+(fact?' • факт: '+fact:'')):'';e.classList.toggle('warn',!!sets.length&&!!fact&&sum!==fact)}
 document.querySelector('#editDaySets').addEventListener('input',paintSetsMismatch);document.querySelector('#editDayReps').addEventListener('input',paintSetsMismatch);
+
+function restoreLocalBackup(){const raw=localStorage.getItem(BACKUP_KEY);if(!raw){alert('Локальной резервной копии пока нет.');return}if(!confirm('Восстановить предыдущую локальную версию данных? Текущее состояние будет сохранено как новая резервная копия.'))return;try{const currentRaw=localStorage.getItem(KEY)||'',old=JSON.parse(raw);if(!old||typeof old!=='object')throw new Error();localStorage.setItem(KEY,raw);if(currentRaw)localStorage.setItem(BACKUP_KEY,currentRaw);location.reload()}catch(e){alert('Резервная копия повреждена.')}}
+const restoreBtn=document.querySelector('#restoreBackup');if(restoreBtn)restoreBtn.onclick=restoreLocalBackup;
