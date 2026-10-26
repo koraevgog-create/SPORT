@@ -167,6 +167,8 @@ function closeHistory(){document.querySelector('#historyModal').classList.remove
 document.querySelector('#showAllHistory').onclick=openHistory;document.querySelector('#historyClose').onclick=closeHistory;document.querySelector('#historyBackdrop').onclick=closeHistory;
 
 function renderDeepAnalytics(){
+ const cur=current(),todayReps=+data.reps[cur]||0,todayGoal=target(cur),stage=Math.min(36,Math.floor((cur-1)/10)+1),nextTarget=stage<36?plan[stage]:500,daysToNext=stage<36?10-((cur-1)%10):0,total=actualReps();
+ const put=(id,v)=>{const e=document.querySelector(id);if(e)e.textContent=v};put('#statusToday',todayReps+' / '+todayGoal);put('#statusTodayText',todayReps>=todayGoal?'норма выполнена':'осталось '+Math.max(0,todayGoal-todayReps));put('#statusStage',stage+' / 36');put('#statusStageText',todayGoal+' в день');put('#statusTo100k',Math.max(0,100000-total).toLocaleString('ru'));put('#statusNextTarget',nextTarget);put('#statusNextText',stage>=36?'финальный уровень':'через '+daysToNext+' дн.');
  const entries=Object.entries(data.reps).filter(([d,v])=>+d>=1&&+d<=360&&+v>0).map(([d,v])=>[+d,+v]).sort((a,b)=>a[0]-b[0]);
  const fact=entries.reduce((a,[,v])=>a+v,0),plannedToRecorded=entries.reduce((a,[d])=>a+target(d),0),avg=entries.length?fact/entries.length:0;
  let allSets=[];Object.entries(data.sessions||{}).forEach(([d,s])=>{if(+d>=1&&+d<=360&&Array.isArray(s.sets))allSets.push(...s.sets.map(Number).filter(v=>v>0))});
@@ -185,3 +187,6 @@ document.querySelector('#showMeasurements').onclick=openMeasures;document.queryS
 
 const sessionToggle=document.querySelector('#sessionToggle'),sessionCard=document.querySelector('#sessionCard');
 if(sessionToggle&&sessionCard)sessionToggle.onclick=()=>sessionCard.classList.toggle('collapsed');
+
+document.querySelector('#exportData').onclick=()=>{const payload={app:'SPORT',version:4,exportedAt:new Date().toISOString(),data};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SPORT-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
+document.querySelector('#importData').onchange=e=>{const file=e.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const parsed=JSON.parse(reader.result),incoming=parsed.data||parsed;if(!incoming||typeof incoming!=='object'||!incoming.reps||!incoming.done)throw new Error();if(!confirm('Импорт заменит текущие данные SPORT. Продолжить?'))return;localStorage.setItem(BACKUP_KEY,localStorage.getItem(KEY)||'');localStorage.setItem(KEY,JSON.stringify(incoming));location.reload()}catch(err){alert('Не удалось прочитать резервную копию SPORT.')}};reader.readAsText(file);e.target.value=''};
