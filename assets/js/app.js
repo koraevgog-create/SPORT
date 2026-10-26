@@ -21,6 +21,17 @@ const current=()=>{const start=new Date(data.startDate+'T00:00:00');if(Number.is
 const dayDate=d=>{const x=new Date(data.startDate+'T00:00:00');x.setDate(x.getDate()+d-1);return x};
 const fullPlanReps=()=>Array.from({length:360},(_,i)=>target(i+1)).reduce((a,b)=>a+b,0);
 const actualReps=()=>Object.entries(data.reps).filter(([d])=>+d>=1&&+d<=360).reduce((a,[,v])=>a+(+v||0),0);
+function syncDayStatus(d){
+ const reps=Math.max(0,+data.reps[d]||0),goal=target(d);
+ data.done[d]=reps>=goal;
+ if(!reps){delete data.reps[d];delete data.done[d]}
+ return !!data.done[d];
+}
+function setDayReps(d,reps){
+ reps=Math.max(0,Math.floor(+reps||0));
+ if(reps)data.reps[d]=reps;else delete data.reps[d];
+ syncDayStatus(d);save();
+}
 const fmt=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
 const fmtLong=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
 function render(){
@@ -40,7 +51,7 @@ function render(){
  el.innerHTML=`<div class="month-head"><b>Месяц ${m}</b><span>${completed}/30 • ${target(a)}→${target(b)}</span></div><div class="days">${ds}</div>`;box.appendChild(el)}
  document.querySelectorAll('.day').forEach(x=>{
  x.onclick=()=>{let d=+x.dataset.day;if(d>current())return;
-   if(!data.done[d]){data.done[d]=true;if(!(+data.reps[d]>0))data.reps[d]=target(d);save();render()}
+   if(!data.done[d]){setDayReps(d,target(d));render()}
    else openDayEditor(d)
  };
  x.oncontextmenu=e=>{e.preventDefault();let d=+x.dataset.day;if(d<=current())openDayEditor(d)}
@@ -52,7 +63,9 @@ function renderHistory(){const box=document.querySelector('#historyList');let ro
 function renderMetricKpis(){let hist=data.metricHistory||[],last=hist.at(-1)||data.metrics||{},first=hist[0]||last;document.querySelector('#weightKpi').textContent=last.weight?last.weight+' кг':'—';document.querySelector('#maxKpi').textContent=last.maxSet||'—';let delta=(last.weight&&first.weight)?(+last.weight-+first.weight):null;document.querySelector('#weightDelta').textContent=delta===null?'—':(delta>0?'+':'')+delta.toFixed(1)+' кг'}
 document.querySelector('#plusBtn').onclick=()=>document.querySelector('#todayInput').value=(+document.querySelector('#todayInput').value||0)+5;
 document.querySelector('#minusBtn').onclick=()=>document.querySelector('#todayInput').value=Math.max(0,(+document.querySelector('#todayInput').value||0)-5);
-document.querySelector('#doneBtn').onclick=()=>{let d=current(),v=+document.querySelector('#todayInput').value||target(d);data.reps[d]=v;data.done[d]=true;save();render()};
+function commitTodayInput(){const d=current(),v=Math.max(0,Math.floor(+document.querySelector('#todayInput').value||0));setDayReps(d,v);render()}
+document.querySelector('#doneBtn').onclick=()=>{let d=current(),v=Math.max(0,Math.floor(+document.querySelector('#todayInput').value||0));if(!v)v=target(d);setDayReps(d,v);render()};
+document.querySelector('#todayInput').addEventListener('change',commitTodayInput);
 document.querySelector('#themeBtn').onclick=()=>document.body.classList.toggle('light');
 ['weight','maxSet','waist','note'].forEach(k=>document.querySelector('#'+k).value=data.metrics[k]||'');
 document.querySelector('#saveMetrics').onclick=()=>{['weight','maxSet','waist','note'].forEach(k=>data.metrics[k]=document.querySelector('#'+k).value);data.metricHistory.push({...data.metrics,date:new Date().toISOString()});save();renderMetricKpis();alert('Показатели сохранены')};
@@ -108,11 +121,11 @@ function renderSession(){
  document.querySelector('#difficulty').value=s.difficulty||'';document.querySelector('#feeling').value=s.feeling||'';document.querySelector('#sessionNote').value=s.note||'';
  document.querySelectorAll('[data-remove-set]').forEach(b=>b.onclick=()=>{s.sets.splice(+b.dataset.removeSet,1);syncSessionReps(d,s);save();render()});
 }
-function syncSessionReps(d,s){const sum=s.sets.reduce((a,b)=>a+(+b||0),0);if(sum>0)data.reps[d]=sum;else if(!data.done[d])delete data.reps[d]}
+function syncSessionReps(d,s){const sum=s.sets.reduce((a,b)=>a+(+b||0),0);if(sum>0)data.reps[d]=sum;else delete data.reps[d];syncDayStatus(d)}
 document.querySelector('#addSetBtn').onclick=()=>{const d=current(),s=getSession(d),inp=document.querySelector('#setInput'),v=Math.floor(+inp.value);if(!Number.isFinite(v)||v<1||v>1000)return;if(!s.startedAt)s.startedAt=new Date().toISOString();s.sets.push(v);syncSessionReps(d,s);inp.value='';save();render();inp.focus()};
 document.querySelector('#setInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.querySelector('#addSetBtn').click()});
 ['difficulty','feeling','sessionNote'].forEach(id=>document.querySelector('#'+id).addEventListener('change',e=>{const s=getSession(current());s[id==='sessionNote'?'note':id]=e.target.value;save()}));
-document.querySelector('#finishSessionBtn').onclick=()=>{const d=current(),s=getSession(d),sum=s.sets.reduce((a,b)=>a+(+b||0),0);if(!sum){alert('Сначала добавь хотя бы один подход.');return}if(sum<target(d)&&!confirm(`Сейчас выполнено ${sum} из ${target(d)}. Завершить тренировку как выполненную?`))return;s.finishedAt=new Date().toISOString();data.reps[d]=sum;data.done[d]=true;save();render()};
+document.querySelector('#finishSessionBtn').onclick=()=>{const d=current(),s=getSession(d),sum=s.sets.reduce((a,b)=>a+(+b||0),0);if(!sum){alert('Сначала добавь хотя бы один подход.');return}if(sum<target(d)&&!confirm(`Сейчас выполнено ${sum} из ${target(d)}. Завершить тренировку как выполненную?`))return;s.finishedAt=new Date().toISOString();data.reps[d]=sum;syncDayStatus(d);save();render()};
 function paintTimer(){document.querySelector('#timerDisplay').textContent=String(Math.floor(restLeft/60)).padStart(2,'0')+':'+String(restLeft%60).padStart(2,'0')}
 document.querySelectorAll('[data-rest]').forEach(b=>b.onclick=()=>{if(timerId)return;document.querySelectorAll('[data-rest]').forEach(x=>x.classList.remove('active'));b.classList.add('active');restSeconds=+b.dataset.rest;restLeft=restSeconds;paintTimer()});
 document.querySelector('#timerBtn').onclick=()=>{const btn=document.querySelector('#timerBtn');if(timerId){clearInterval(timerId);timerId=null;restLeft=restSeconds;btn.textContent='▶ Старт';paintTimer();return}restLeft=restSeconds;paintTimer();btn.textContent='■ Стоп';timerId=setInterval(()=>{restLeft--;paintTimer();if(restLeft<=0){clearInterval(timerId);timerId=null;btn.textContent='▶ Старт';restLeft=restSeconds;setTimeout(paintTimer,800)}},1000)};
@@ -136,6 +149,6 @@ document.querySelector('#dayModalClose').onclick=closeDayEditor;document.querySe
 document.querySelector('#saveDayBtn').onclick=()=>{if(!editingDay)return;const d=editingDay,reps=Math.max(0,Math.floor(+document.querySelector('#editDayReps').value||0)),raw=document.querySelector('#editDaySets').value.trim();
  const sets=raw?raw.split(/[,;+ ]+/).map(Number).filter(v=>Number.isFinite(v)&&v>0).map(Math.floor):[];
  const setSum=sets.reduce((a,b)=>a+b,0),finalReps=sets.length?setSum:reps;if(finalReps<=0){alert('Укажи количество отжиманий или подходы.');return}
- data.reps[d]=finalReps;data.done[d]=true;const s=getSession(d);s.sets=sets;s.difficulty=document.querySelector('#editDayDifficulty').value;s.feeling=document.querySelector('#editDayFeeling').value;s.note=document.querySelector('#editDayNote').value;s.finishedAt=s.finishedAt||new Date().toISOString();save();closeDayEditor();render()};
+ data.reps[d]=finalReps;syncDayStatus(d);const s=getSession(d);s.sets=sets;s.difficulty=document.querySelector('#editDayDifficulty').value;s.feeling=document.querySelector('#editDayFeeling').value;s.note=document.querySelector('#editDayNote').value;s.finishedAt=s.finishedAt||new Date().toISOString();save();closeDayEditor();render()};
 document.querySelector('#deleteDayBtn').onclick=()=>{if(!editingDay||!confirm('Удалить запись этой тренировки?'))return;const d=editingDay;delete data.done[d];delete data.reps[d];delete data.sessions[d];save();closeDayEditor();render()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editingDay)closeDayEditor()});
