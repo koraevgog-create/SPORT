@@ -9,10 +9,14 @@ if(!data.startDate){
  const knownDays=Object.keys(data.done||{}).concat(Object.keys(data.reps||{})).map(Number).filter(n=>Number.isFinite(n)&&n>=1&&n<=360);
  const inferredDay=knownDays.length?Math.max(...knownDays):1, x=new Date();x.setHours(0,0,0,0);x.setDate(x.getDate()-(inferredDay-1));data.startDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
 }
-if(!data.metricHistory)data.metricHistory=[];
+if(!Array.isArray(data.metricHistory))data.metricHistory=[];
+if(!data.metricHistory.length&&data.metrics&&Object.values(data.metrics).some(v=>String(v??'').trim()!=='')){
+ data.metricHistory.push({...data.metrics,date:new Date().toISOString()});
+}
 if(!data.bestStreak)data.bestStreak=0;
 if(!data.sessions)data.sessions={};
 let editingMeasureIndex=null;
+const localDateKey=()=>{const d=new Date(),o=d.getTimezoneOffset();return new Date(d.getTime()-o*60000).toISOString().slice(0,10)};
 const BACKUP_KEY='sport-v1-backup';
 const save=()=>{try{const old=localStorage.getItem(KEY);if(old)localStorage.setItem(BACKUP_KEY,old)}catch(e){}data.schemaVersion=4;localStorage.setItem(KEY,JSON.stringify(data))};
 const elapsedDays=()=>{const start=new Date(data.startDate+'T00:00:00'),today=new Date();today.setHours(0,0,0,0);if(Number.isNaN(start.getTime()))return 1;return Math.min(360,Math.max(1,Math.floor((today-start)/86400000)+1))};
@@ -71,7 +75,7 @@ function calcStreak(){let s=0,cur=current();for(let d=cur;d>=1;d--){if(data.done
 function historyRow(d){let s=data.sessions[d],detail=s&&s.sets?.length?`${s.sets.length} подх. • ${s.difficulty?'сложность '+s.difficulty+'/5':'без оценки'}`:'быстрая запись';return `<div class="history-row clickable" data-history-day="${d}"><span class="history-status ${data.done[d]?'ok':''}">${data.done[d]?'✓':'•'}</span><div><b>День ${d}</b><small>${fmtLong(dayDate(d))} • ${detail}</small></div><div><span>Цель</span><b>${target(d)}</b></div><div><span>Факт</span><b>${data.reps[d]||0}</b></div></div>`}
 function bindHistoryRows(root=document){root.querySelectorAll('[data-history-day]').forEach(r=>r.onclick=()=>{closeHistory();openDayEditor(+r.dataset.historyDay)})}
 function renderHistory(){const box=document.querySelector('#historyList');let rows=[];for(let d=360;d>=1&&rows.length<8;d--){if(data.done[d]||data.reps[d])rows.push(historyRow(d))}box.innerHTML=rows.length?rows.join(''):'<div class="empty-history">Здесь появятся завершённые тренировки. Первый день — начало истории.</div>';bindHistoryRows(box)}
-function metricValues(key){return (data.metricHistory||[]).filter(x=>x&&x[key]!==''&&x[key]!=null&&Number.isFinite(+x[key]))}
+function metricValues(key){return (data.metricHistory||[]).filter(x=>x&&x[key]!==''&&x[key]!=null&&Number.isFinite(+x[key])).sort((a,b)=>new Date(a.date||0)-new Date(b.date||0))}
 function renderMetricKpis(){let hist=data.metricHistory||[],weights=metricValues('weight'),maxes=metricValues('maxSet'),lastWeight=weights.at(-1),firstWeight=weights[0],lastMax=maxes.at(-1);document.querySelector('#weightKpi').textContent=lastWeight?lastWeight.weight+' кг':(data.metrics.weight?data.metrics.weight+' кг':'—');document.querySelector('#maxKpi').textContent=lastMax?lastMax.maxSet:(data.metrics.maxSet||'—');let delta=(lastWeight&&firstWeight)?(+lastWeight.weight-+firstWeight.weight):null;document.querySelector('#weightDelta').textContent=delta===null?'—':(delta>0?'+':'')+delta.toFixed(1)+' кг';const mc=document.querySelector('#measureCount');if(mc)mc.textContent=hist.length+' '+(hist.length===1?'запись':'записей')}
 document.querySelector('#plusBtn').onclick=()=>document.querySelector('#todayInput').value=(+document.querySelector('#todayInput').value||0)+5;
 document.querySelector('#minusBtn').onclick=()=>document.querySelector('#todayInput').value=Math.max(0,(+document.querySelector('#todayInput').value||0)-5);
@@ -80,7 +84,7 @@ document.querySelector('#doneBtn').onclick=()=>{let d=current(),v=Math.max(0,Mat
 
 document.querySelector('#themeBtn').onclick=()=>document.body.classList.toggle('light');
 ['weight','maxSet','waist','note'].forEach(k=>document.querySelector('#'+k).value=data.metrics[k]||'');
-document.querySelector('#saveMetrics').onclick=()=>{let next={};['weight','maxSet','waist','note'].forEach(k=>next[k]=document.querySelector('#'+k).value.trim());if(!next.weight&&!next.maxSet&&!next.waist&&!next.note){alert('Заполни хотя бы один показатель.');return}data.metrics={...data.metrics,...next};const today=new Date().toISOString().slice(0,10),todayIdx=data.metricHistory.findIndex(x=>x&&String(x.date||'').slice(0,10)===today),idx=editingMeasureIndex!==null?editingMeasureIndex:todayIdx,record={...data.metrics,date:idx>=0&&data.metricHistory[idx]?.date?data.metricHistory[idx].date:new Date().toISOString()};if(idx>=0)data.metricHistory[idx]=record;else data.metricHistory.push(record);editingMeasureIndex=null;save();renderMetricKpis();renderChart(activeChart);alert(idx>=0?'Замер обновлён':'Новый замер сохранён')};
+document.querySelector('#saveMetrics').onclick=()=>{let next={};['weight','maxSet','waist','note'].forEach(k=>next[k]=document.querySelector('#'+k).value.trim());if(!next.weight&&!next.maxSet&&!next.waist&&!next.note){alert('Заполни хотя бы один показатель.');return}data.metrics={...data.metrics,...next};const today=localDateKey(),todayIdx=data.metricHistory.findIndex(x=>x&&String(x.date||'').slice(0,10)===today),idx=editingMeasureIndex!==null?editingMeasureIndex:todayIdx,record={...data.metrics,date:idx>=0&&data.metricHistory[idx]?.date?data.metricHistory[idx].date:new Date().toISOString()};if(idx>=0)data.metricHistory[idx]=record;else data.metricHistory.push(record);editingMeasureIndex=null;save();renderMetricKpis();renderChart(activeChart);alert(idx>=0?'Замер обновлён':'Новый замер сохранён')};
 document.querySelector('#editStartBtn').onclick=()=>{let v=prompt('Дата старта челленджа (ГГГГ-ММ-ДД):',data.startDate);if(/^\d{4}-\d{2}-\d{2}$/.test(v||'')&&!Number.isNaN(new Date(v+'T00:00:00').getTime())){data.startDate=v;save();render()}else if(v!==null)alert('Дата должна быть в формате ГГГГ-ММ-ДД')};
 document.querySelector('#todayLabel').textContent=new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
 const menuBtn=document.querySelector('#menuBtn'),sidebar=document.querySelector('#sidebar'),overlay=document.querySelector('#sidebarOverlay');
@@ -90,7 +94,6 @@ document.querySelectorAll('.side-nav a').forEach(a=>a.addEventListener('click',c
 const observed=['dashboard','pushups','analytics','transformation','modules'];window.addEventListener('scroll',()=>{let active='dashboard';for(const id of observed){const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<180)active=id}document.querySelectorAll('.nav-link').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active))});
 
 let activeChart='reps';
-render();
 function longestStreak(){let best=0,s=0;for(let d=1;d<=360;d++){if(data.done[d]){s++;best=Math.max(best,s)}else s=0}return best}
 function renderGame(){
  const completed=elapsedDoneCount(), total=Object.entries(data.reps).filter(([d])=>+d>=1&&+d<=360).reduce((a,[,b])=>a+(Number.isFinite(+b)&&+b>0?+b:0),0), xp=completed*100+Math.floor(total/10), level=Math.floor(xp/500)+1, into=xp%500;
@@ -201,3 +204,6 @@ document.querySelector('#editDaySets').addEventListener('input',paintSetsMismatc
 
 function restoreLocalBackup(){const raw=localStorage.getItem(BACKUP_KEY);if(!raw){alert('Локальной резервной копии пока нет.');return}if(!confirm('Восстановить предыдущую локальную версию данных? Текущее состояние будет сохранено как новая резервная копия.'))return;try{const currentRaw=localStorage.getItem(KEY)||'',old=JSON.parse(raw);if(!old||typeof old!=='object')throw new Error();localStorage.setItem(KEY,raw);if(currentRaw)localStorage.setItem(BACKUP_KEY,currentRaw);location.reload()}catch(e){alert('Резервная копия повреждена.')}}
 const restoreBtn=document.querySelector('#restoreBackup');if(restoreBtn)restoreBtn.onclick=restoreLocalBackup;
+
+// Boot only after every constant, function and event handler is initialized.
+render();
