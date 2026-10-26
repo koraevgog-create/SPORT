@@ -5,11 +5,15 @@ try{data=JSON.parse(localStorage.getItem(KEY)||'{"done":{},"reps":{},"metrics":{
 data.done=data.done&&typeof data.done==='object'?data.done:{};
 data.reps=data.reps&&typeof data.reps==='object'?data.reps:{};
 data.metrics=data.metrics&&typeof data.metrics==='object'?data.metrics:{};
-if(!data.startDate)data.startDate=new Date().toISOString().slice(0,10);
+if(!data.startDate){
+ const knownDays=Object.keys(data.done||{}).concat(Object.keys(data.reps||{})).map(Number).filter(n=>Number.isFinite(n)&&n>=1&&n<=360);
+ const inferredDay=knownDays.length?Math.max(...knownDays):1, x=new Date();x.setHours(0,0,0,0);x.setDate(x.getDate()-(inferredDay-1));data.startDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+}
 if(!data.metricHistory)data.metricHistory=[];
 if(!data.bestStreak)data.bestStreak=0;
 if(!data.sessions)data.sessions={};
-const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
+const save=()=>{data.schemaVersion=2;localStorage.setItem(KEY,JSON.stringify(data))};
+save();
 const target=d=>plan[Math.min(35,Math.floor((d-1)/10))];
 const doneCount=()=>Object.entries(data.done).filter(([d,v])=>v&&+d>=1&&+d<=360).length;
 const elapsedDoneCount=()=>Object.entries(data.done).filter(([d,v])=>v&&+d>=1&&+d<=current()).length;
@@ -24,7 +28,8 @@ function render(){
  document.querySelector('#yearPct').textContent=pct+'%';document.querySelector('#yearRing').style.background='conic-gradient(var(--accent) '+pct*3.6+'deg,#242a31 0deg)';
  document.querySelector('#streak').textContent=calcStreak()+' дней';document.querySelector('#totalReps').textContent=Object.values(data.reps).reduce((a,b)=>a+(+b||0),0).toLocaleString('ru');
  document.querySelector('#currentDay').textContent=cur+' / 360';document.querySelector('#todayTarget').textContent=t;document.querySelector('#levelNo').textContent=Math.floor((cur-1)/10)+1;
- document.querySelector('#overallBar').style.width=progressionPct+'%';document.querySelector('#progressionMarker').style.left=progressionPct+'%';document.querySelector('#progressionCurrent').textContent=t;document.querySelector('#progressionPct').textContent=Math.round(progressionPct)+'% пути';document.querySelector('#sideBar').style.width=pct+'%';document.querySelector('#sidePct').textContent=pct+'%';document.querySelector('#todayInput').value=data.reps[cur]||0;
+ const overallBar=document.querySelector('#overallBar'),progressionMarker=document.querySelector('#progressionMarker'),progressionCurrent=document.querySelector('#progressionCurrent'),progressionLabel=document.querySelector('#progressionPct');
+ if(overallBar)overallBar.style.width=progressionPct+'%';if(progressionMarker)progressionMarker.style.left=progressionPct+'%';if(progressionCurrent)progressionCurrent.textContent=t;if(progressionLabel)progressionLabel.textContent=Math.round(progressionPct)+'% пути';document.querySelector('#sideBar').style.width=pct+'%';document.querySelector('#sidePct').textContent=pct+'%';document.querySelector('#todayInput').value=data.reps[cur]||0;
  document.querySelector('#todayLabel').textContent=fmtLong(dayDate(cur))+' • День '+cur+' из 360';
  document.querySelector('#startDateLabel').textContent=fmtLong(dayDate(1));document.querySelector('#finishDateLabel').textContent=fmtLong(dayDate(360));
  document.querySelector('#planReps').textContent=Array.from({length:cur},(_,i)=>i+1).filter(d=>data.done[d]).reduce((a,d)=>a+target(d),0).toLocaleString('ru');
@@ -51,7 +56,7 @@ document.querySelector('#doneBtn').onclick=()=>{let d=current(),v=+document.quer
 document.querySelector('#themeBtn').onclick=()=>document.body.classList.toggle('light');
 ['weight','maxSet','waist','note'].forEach(k=>document.querySelector('#'+k).value=data.metrics[k]||'');
 document.querySelector('#saveMetrics').onclick=()=>{['weight','maxSet','waist','note'].forEach(k=>data.metrics[k]=document.querySelector('#'+k).value);data.metricHistory.push({...data.metrics,date:new Date().toISOString()});save();renderMetricKpis();alert('Показатели сохранены')};
-document.querySelector('#editStartBtn').onclick=()=>{let v=prompt('Дата старта челленджа (ГГГГ-ММ-ДД):',data.startDate);if(/^\d{4}-\d{2}-\d{2}$/.test(v||'')){data.startDate=v;save();render()}};
+document.querySelector('#editStartBtn').onclick=()=>{let v=prompt('Дата старта челленджа (ГГГГ-ММ-ДД):',data.startDate);if(/^\d{4}-\d{2}-\d{2}$/.test(v||'')&&!Number.isNaN(new Date(v+'T00:00:00').getTime())){data.startDate=v;save();render()}else if(v!==null)alert('Дата должна быть в формате ГГГГ-ММ-ДД')};
 document.querySelector('#todayLabel').textContent=new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
 render();
 const menuBtn=document.querySelector('#menuBtn'),sidebar=document.querySelector('#sidebar'),overlay=document.querySelector('#sidebarOverlay');
