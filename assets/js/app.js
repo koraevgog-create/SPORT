@@ -57,13 +57,13 @@ function render(){
  };
  x.oncontextmenu=e=>{e.preventDefault();let d=+x.dataset.day;if(d<=current())openDayEditor(d)}
 });
- renderHistory();renderMetricKpis();renderGame();renderAchievements();renderChart(activeChart);renderSession();
+ renderHistory();renderMetricKpis();renderGame();renderAchievements();renderChart(activeChart);renderSession();renderDeepAnalytics();
 }
 function calcStreak(){let s=0,cur=current();for(let d=cur;d>=1;d--){if(data.done[d])s++;else if(d===cur)continue;else break}return s}
 function historyRow(d){let s=data.sessions[d],detail=s&&s.sets?.length?`${s.sets.length} подх. • ${s.difficulty?'сложность '+s.difficulty+'/5':'без оценки'}`:'быстрая запись';return `<div class="history-row clickable" data-history-day="${d}"><span class="history-status ${data.done[d]?'ok':''}">${data.done[d]?'✓':'•'}</span><div><b>День ${d}</b><small>${fmtLong(dayDate(d))} • ${detail}</small></div><div><span>Цель</span><b>${target(d)}</b></div><div><span>Факт</span><b>${data.reps[d]||0}</b></div></div>`}
 function bindHistoryRows(root=document){root.querySelectorAll('[data-history-day]').forEach(r=>r.onclick=()=>{closeHistory();openDayEditor(+r.dataset.historyDay)})}
 function renderHistory(){const box=document.querySelector('#historyList');let rows=[];for(let d=360;d>=1&&rows.length<8;d--){if(data.done[d]||data.reps[d])rows.push(historyRow(d))}box.innerHTML=rows.length?rows.join(''):'<div class="empty-history">Здесь появятся завершённые тренировки. Первый день — начало истории.</div>';bindHistoryRows(box)}
-function renderMetricKpis(){let hist=data.metricHistory||[],last=hist.at(-1)||data.metrics||{},first=hist[0]||last;document.querySelector('#weightKpi').textContent=last.weight?last.weight+' кг':'—';document.querySelector('#maxKpi').textContent=last.maxSet||'—';let delta=(last.weight&&first.weight)?(+last.weight-+first.weight):null;document.querySelector('#weightDelta').textContent=delta===null?'—':(delta>0?'+':'')+delta.toFixed(1)+' кг'}
+function renderMetricKpis(){let hist=data.metricHistory||[],last=hist.at(-1)||data.metrics||{},first=hist[0]||last;document.querySelector('#weightKpi').textContent=last.weight?last.weight+' кг':'—';document.querySelector('#maxKpi').textContent=last.maxSet||'—';let delta=(last.weight&&first.weight)?(+last.weight-+first.weight):null;document.querySelector('#weightDelta').textContent=delta===null?'—':(delta>0?'+':'')+delta.toFixed(1)+' кг';const mc=document.querySelector('#measureCount');if(mc)mc.textContent=hist.length+' '+(hist.length===1?'запись':'записей')}
 document.querySelector('#plusBtn').onclick=()=>document.querySelector('#todayInput').value=(+document.querySelector('#todayInput').value||0)+5;
 document.querySelector('#minusBtn').onclick=()=>document.querySelector('#todayInput').value=Math.max(0,(+document.querySelector('#todayInput').value||0)-5);
 function commitTodayInput(){const d=current(),v=Math.max(0,Math.floor(+document.querySelector('#todayInput').value||0));setDayReps(d,v);render()}
@@ -160,3 +160,18 @@ function renderFullHistory(){const box=document.querySelector('#fullHistoryList'
 function openHistory(){renderFullHistory();document.querySelector('#historyModal').classList.add('open');document.body.classList.add('modal-open')}
 function closeHistory(){document.querySelector('#historyModal').classList.remove('open');if(!document.querySelector('#dayModal').classList.contains('open'))document.body.classList.remove('modal-open')}
 document.querySelector('#showAllHistory').onclick=openHistory;document.querySelector('#historyClose').onclick=closeHistory;document.querySelector('#historyBackdrop').onclick=closeHistory;
+
+function renderDeepAnalytics(){
+ const entries=Object.entries(data.reps).filter(([d,v])=>+d>=1&&+d<=360&&+v>0).map(([d,v])=>[+d,+v]).sort((a,b)=>a[0]-b[0]);
+ const fact=entries.reduce((a,[,v])=>a+v,0),plannedToRecorded=entries.reduce((a,[d])=>a+target(d),0),avg=entries.length?fact/entries.length:0;
+ let allSets=[];Object.entries(data.sessions||{}).forEach(([d,s])=>{if(+d>=1&&+d<=360&&Array.isArray(s.sets))allSets.push(...s.sets.map(Number).filter(v=>v>0))});
+ const best=entries.length?entries.reduce((a,b)=>b[1]>a[1]?b:a,entries[0]):[0,0],extra=entries.reduce((a,[d,v])=>a+Math.max(0,v-target(d)),0);
+ const set=(id,val)=>{const e=document.querySelector(id);if(e)e.textContent=val};
+ set('#aPlanFact',plannedToRecorded?Math.round(fact/plannedToRecorded*100)+'%':'0%');set('#aPlanFactSub',fact.toLocaleString('ru')+' / '+plannedToRecorded.toLocaleString('ru'));
+ set('#aAvgDay',avg?avg.toFixed(1):'0');set('#aAvgSet',allSets.length?(allSets.reduce((a,b)=>a+b,0)/allSets.length).toFixed(1):'—');set('#aSetsTotal',allSets.length+' подходов записано');
+ set('#aBestDay',best[1].toLocaleString('ru'));set('#aBestDayDate',best[0]?fmtLong(dayDate(best[0])):'—');set('#aDoneDays',doneCount());set('#aDoneDaysSub','из 360');set('#aExtra',extra.toLocaleString('ru'));
+ const levels=[30,50,100,150,200,300,400,500],mil=document.querySelector('#milestones');
+ if(mil)mil.innerHTML=levels.map(n=>{const hit=entries.find(([,v])=>v>=n);return `<div class="milestone ${hit?'hit':''}"><span>${hit?'✓':'○'}</span><div><b>${n}</b><small>${hit?fmt(dayDate(hit[0])):'ещё впереди'}</small></div></div>`}).join('');
+ const ms=document.querySelector('#monthlySummary');if(ms)ms.innerHTML=Array.from({length:12},(_,m)=>{const a=m*30+1,b=a+29,days=Array.from({length:30},(_,i)=>a+i),plan=days.reduce((s,d)=>s+target(d),0),actual=days.reduce((s,d)=>s+(+data.reps[d]||0),0),done=days.filter(d=>data.done[d]).length,pct=Math.round(actual/plan*100);return `<article class="month-summary"><div><span>МЕСЯЦ ${m+1}</span><b>${actual.toLocaleString('ru')} <i>/ ${plan.toLocaleString('ru')}</i></b></div><div class="month-summary-bar"><i style="width:${Math.min(100,pct)}%"></i></div><footer><span>${done}/30 дней</span><strong>${pct}% объёма</strong></footer></article>`}).join('');
+}
+document.querySelector('#showMeasurements').onclick=()=>{const hist=data.metricHistory||[];if(!hist.length){alert('История замеров пока пуста. Сохрани первый замер ниже.');return}alert(hist.slice().reverse().map((m,i)=>{const d=m.date?new Date(m.date).toLocaleDateString('ru-RU'):'—';return d+' • вес '+(m.weight||'—')+' кг • талия '+(m.waist||'—')+' см • максимум '+(m.maxSet||'—')}).join('\n'))};
