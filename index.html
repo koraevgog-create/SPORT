@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b0d10">
 <title>SPORT — личная спортивная система</title>
-<link rel="stylesheet" href="assets/css/styles.css?v=20261027-16">
+<link rel="stylesheet" href="assets/css/styles.css?v=20261027-17">
 </head>
 <body>
 <button class="mobile-menu" id="menuBtn" aria-label="Открыть меню">☰</button>
@@ -46,7 +46,7 @@
 <div class="counter"><button id="minusBtn">−</button><input id="todayInput" type="number" min="0" value="0"><button id="plusBtn">+</button><small>сделано сегодня</small></div>
 <button id="doneBtn" class="btn primary big">✓ Выполнено</button>
 </div>
-<div class="session-card">
+<div class="session-card collapsed" id="sessionCard"><button class="session-toggle" id="sessionToggle" type="button"><div><span>ДЕТАЛЬНАЯ ТРЕНИРОВКА</span><b>Подходы, таймер и самочувствие</b></div><div class="session-toggle-right"><small>необязательно</small><i id="sessionChevron">⌄</i></div></button><div class="session-body" id="sessionBody">
 <div class="session-head"><div><p class="eyebrow">СЕССИЯ</p><h3>Подходы сегодня</h3></div><div class="remaining"><span>ОСТАЛОСЬ</span><b id="remainingReps">30</b></div></div>
 <div class="session-progress"><i id="sessionBar"></i></div>
 <div class="set-entry"><input id="setInput" type="number" min="1" inputmode="numeric" placeholder="Повторения в подходе"><button id="addSetBtn" class="btn primary">+ Добавить подход</button></div>
@@ -56,7 +56,7 @@
 <div class="session-meta"><label>Сложность<select id="difficulty"><option value="">—</option><option value="1">1 — легко</option><option value="2">2</option><option value="3">3 — нормально</option><option value="4">4</option><option value="5">5 — тяжело</option></select></label><label>Самочувствие<select id="feeling"><option value="">—</option><option>Отлично</option><option>Хорошо</option><option>Нормально</option><option>Тяжело</option></select></label><label class="session-note">Заметка<input id="sessionNote" type="text" placeholder="Техника, ощущения, боль..."></label></div>
 </div>
 <div class="session-footer"><div><span>СУММА ПОДХОДОВ</span><b id="setsTotal">0</b></div><div><span>ПОДХОДОВ</span><b id="setsCount">0</b></div><button id="finishSessionBtn" class="btn primary">Завершить тренировку</button></div>
-</div>
+</div></div>
 </section>
 <section id="pushups" class="wrap">
 <div class="section-head"><div><p class="eyebrow">ЧЕЛЛЕНДЖ №01</p><h2>От 30 до 500</h2></div><div class="big-number"><b>15 000</b><span>отжиманий в финальном месяце</span></div></div>
@@ -100,5 +100,5 @@
 </section>
 </main>
 <footer><b>SPORT.</b><span>Система сильнее мотивации.</span></footer></div>
-<script src="assets/js/app.js?v=20261027-16"></script>
+<script src="assets/js/app.js?v=20261027-17"></script>
 <div class="day-modal" id="dayModal"><div class="day-modal-backdrop" id="dayModalBackdrop"></div><div class="day-modal-card"><button class="modal-close" id="dayModalClose">×</button><p class="eyebrow">ТРЕНИРОВКА</p><h2 id="editDayTitle">День</h2><p class="modal-date" id="editDayDate"></p><div class="edit-summary"><div><span>ПЛАН</span><b id="editDayTarget">0</b></div><label>ФАКТ<input id="editDayReps" type="number" min="0"></label></div><label class="modal-label">Подходы <small>через запятую, например 10, 10, 10</small><input id="editDaySets" type="text"></label><div class="modal-grid"><label class="modal-label">Сложность<select id="editDayDifficulty"><option value="">—</option><option value="1">1 — легко</option><option value="2">2</option><option value="3">3 — нормально</option><option value="4">4</option><option value="5">5 — тяжело</option></select></label><label class="modal-label">Самочувствие<select id="editDayFeeling"><option value="">—</option><option>Отлично</option><option>Хорошо</option><option>Нормально</option><option>Тяжело</option></select></label></div><label class="modal-label">Заметка<textarea id="editDayNote" rows="3"></textarea></label><div class="modal-actions"><button id="deleteDayBtn" class="btn danger">Удалить запись</button><button id="saveDayBtn" class="btn primary">Сохранить изменения</button></div></div></div><div class="history-modal" id="historyModal"><div class="day-modal-backdrop" id="historyBackdrop"></div><div class="history-modal-card"><button class="modal-close" id="historyClose">×</button><p class="eyebrow">ИСТОРИЯ</p><h2>Все тренировки</h2><p class="modal-date">Нажми на любой день, чтобы изменить результат.</p><div id="fullHistoryList" class="full-history-list"></div></div></div></body></html>
