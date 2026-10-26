@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b0d10">
 <title>SPORT — личная спортивная система</title>
-<link rel="stylesheet" href="assets/css/styles.css?v=20261027-15">
+<link rel="stylesheet" href="assets/css/styles.css?v=20261027-16">
 </head>
 <body>
 <button class="mobile-menu" id="menuBtn" aria-label="Открыть меню">☰</button>
@@ -63,7 +63,21 @@
 <div class="progress-panel progression-panel"><div class="progress-top"><span>ПРОГРЕССИЯ ДНЕВНОЙ НОРМЫ</span><b><i id="progressionCurrent">30</i> <small>отжиманий / день</small></b></div><div class="progression-track"><div class="bar"><i id="overallBar"></i></div><span class="progression-marker" id="progressionMarker"></span></div><div class="bar-labels"><span>СТАРТ • 30</span><span id="progressionPct">0% пути</span><span>ФИНИШ • 500</span></div></div>
 <div class="year-volume-card"><div class="year-volume-head"><div><p class="eyebrow">ГОДОВОЙ ОБЪЁМ</p><h3><b id="yearActual">0</b> <span>/ 99 450</span></h3></div><div class="year-volume-percent"><b id="yearVolumePct">0%</b><span>всех отжиманий</span></div></div><div class="year-volume-bar"><i id="yearVolumeBar"></i></div><div class="year-volume-meta"><span>Фактически сделано</span><span id="yearRemaining">Осталось 99 450</span></div></div><div class="calendar-hint"><span>Клик по пустому дню</span> — отметить план автоматически <i>•</i> <span>Клик по выполненному</span> — открыть и редактировать</div><div id="months" class="months"></div><div class="history-panel"><div class="section-head compact"><div><p class="eyebrow">ЖУРНАЛ</p><h2>Последние тренировки</h2></div><div class="history-summary"><b id="planReps">0</b><span>плановых повторений пройдено</span></div></div><div class="history-controls"><button id="showAllHistory" class="btn">Вся история</button></div><div id="historyList" class="history-list"></div></div>
 </section>
-<section class="wrap achievements-section"><div class="section-head"><div><p class="eyebrow">ДОСТИЖЕНИЯ</p><h2>Путь силы</h2></div><p class="muted"><span id="achievementCount">0</span> открыто</p></div><div id="achievements" class="achievements"></div></section>
+<section class="wrap deep-analytics" id="analytics">
+<div class="section-head"><div><p class="eyebrow">АНАЛИТИКА ЧЕЛЛЕНДЖА</p><h2>Цифры трансформации</h2></div><p class="muted">Все показатели пересчитываются из истории тренировок.</p></div>
+<div class="analytics-kpis">
+<div><span>ФАКТ / ПЛАН</span><b id="aPlanFact">0%</b><small id="aPlanFactSub">0 / 0</small></div>
+<div><span>СРЕДНЕЕ / ДЕНЬ</span><b id="aAvgDay">0</b><small>по дням с результатом</small></div>
+<div><span>СРЕДНИЙ ПОДХОД</span><b id="aAvgSet">—</b><small id="aSetsTotal">0 подходов записано</small></div>
+<div><span>ЛУЧШИЙ ДЕНЬ</span><b id="aBestDay">0</b><small id="aBestDayDate">—</small></div>
+<div><span>ДНЕЙ ПО ПЛАНУ</span><b id="aDoneDays">0</b><small id="aDoneDaysSub">из 360</small></div>
+<div><span>ПЕРЕВЫПОЛНЕНИЕ</span><b id="aExtra">0</b><small>сверх планов закрытых дней</small></div>
+</div>
+<div class="section-head analytics-subhead"><div><p class="eyebrow">КОНТРОЛЬНЫЕ ТОЧКИ</p><h3>30 → 500 за день</h3></div></div>
+<div id="milestones" class="milestones"></div>
+<div class="section-head analytics-subhead"><div><p class="eyebrow">12 МЕСЯЦЕВ</p><h3>Итоги по месяцам</h3></div></div>
+<div id="monthlySummary" class="monthly-summary"></div>
+</section><section class="wrap achievements-section"><div class="section-head"><div><p class="eyebrow">ДОСТИЖЕНИЯ</p><h2>Путь силы</h2></div><p class="muted"><span id="achievementCount">0</span> открыто</p></div><div id="achievements" class="achievements"></div></section>
 <section class="wrap chart-section"><div class="section-head"><div><p class="eyebrow">АНАЛИТИКА</p><h2>Динамика</h2></div><div class="chart-tabs"><button class="active" data-chart="reps">Отжимания</button><button data-chart="weight">Вес</button></div></div><div class="chart-card"><div id="chartEmpty" class="chart-empty">График появится после первых данных</div><svg id="progressChart" viewBox="0 0 900 260" preserveAspectRatio="none"></svg></div></section>
 <section id="modules" class="wrap modules-section">
 <div class="section-head"><div><p class="eyebrow">ЭКОСИСТЕМА SPORT</p><h2>Дисциплины</h2></div><p class="muted">Одна система — разные направления развития.</p></div>
@@ -77,7 +91,7 @@
 </div>
 </section>
 <section class="wrap metrics"><div class="section-head"><div><p class="eyebrow">КОНТРОЛЬ</p><h2>Трансформация</h2></div></div>
-<div class="metric-kpis"><div><span>Текущий вес</span><b id="weightKpi">—</b></div><div><span>Изменение</span><b id="weightDelta">—</b></div><div><span>Макс. подход</span><b id="maxKpi">—</b></div></div><div class="metric-grid">
+<div class="body-history-head"><div><span>ИСТОРИЯ ЗАМЕРОВ</span><b id="measureCount">0 записей</b></div><button id="showMeasurements" class="btn">Показать историю</button></div><div class="metric-kpis"><div><span>Текущий вес</span><b id="weightKpi">—</b></div><div><span>Изменение</span><b id="weightDelta">—</b></div><div><span>Макс. подход</span><b id="maxKpi">—</b></div></div><div class="metric-grid">
 <label>Вес, кг<input id="weight" type="number" step=".1" placeholder="94"></label>
 <label>Максимум за подход<input id="maxSet" type="number" placeholder="—"></label>
 <label>Талия, см<input id="waist" type="number" step=".1" placeholder="—"></label>
@@ -86,5 +100,5 @@
 </section>
 </main>
 <footer><b>SPORT.</b><span>Система сильнее мотивации.</span></footer></div>
-<script src="assets/js/app.js?v=20261027-15"></script>
+<script src="assets/js/app.js?v=20261027-16"></script>
 <div class="day-modal" id="dayModal"><div class="day-modal-backdrop" id="dayModalBackdrop"></div><div class="day-modal-card"><button class="modal-close" id="dayModalClose">×</button><p class="eyebrow">ТРЕНИРОВКА</p><h2 id="editDayTitle">День</h2><p class="modal-date" id="editDayDate"></p><div class="edit-summary"><div><span>ПЛАН</span><b id="editDayTarget">0</b></div><label>ФАКТ<input id="editDayReps" type="number" min="0"></label></div><label class="modal-label">Подходы <small>через запятую, например 10, 10, 10</small><input id="editDaySets" type="text"></label><div class="modal-grid"><label class="modal-label">Сложность<select id="editDayDifficulty"><option value="">—</option><option value="1">1 — легко</option><option value="2">2</option><option value="3">3 — нормально</option><option value="4">4</option><option value="5">5 — тяжело</option></select></label><label class="modal-label">Самочувствие<select id="editDayFeeling"><option value="">—</option><option>Отлично</option><option>Хорошо</option><option>Нормально</option><option>Тяжело</option></select></label></div><label class="modal-label">Заметка<textarea id="editDayNote" rows="3"></textarea></label><div class="modal-actions"><button id="deleteDayBtn" class="btn danger">Удалить запись</button><button id="saveDayBtn" class="btn primary">Сохранить изменения</button></div></div></div><div class="history-modal" id="historyModal"><div class="day-modal-backdrop" id="historyBackdrop"></div><div class="history-modal-card"><button class="modal-close" id="historyClose">×</button><p class="eyebrow">ИСТОРИЯ</p><h2>Все тренировки</h2><p class="modal-date">Нажми на любой день, чтобы изменить результат.</p><div id="fullHistoryList" class="full-history-list"></div></div></div></body></html>
