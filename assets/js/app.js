@@ -83,7 +83,6 @@ document.querySelector('#themeBtn').onclick=()=>document.body.classList.toggle('
 document.querySelector('#saveMetrics').onclick=()=>{let next={};['weight','maxSet','waist','note'].forEach(k=>next[k]=document.querySelector('#'+k).value.trim());if(!next.weight&&!next.maxSet&&!next.waist&&!next.note){alert('Заполни хотя бы один показатель.');return}data.metrics={...data.metrics,...next};const today=new Date().toISOString().slice(0,10),todayIdx=data.metricHistory.findIndex(x=>x&&String(x.date||'').slice(0,10)===today),idx=editingMeasureIndex!==null?editingMeasureIndex:todayIdx,record={...data.metrics,date:idx>=0&&data.metricHistory[idx]?.date?data.metricHistory[idx].date:new Date().toISOString()};if(idx>=0)data.metricHistory[idx]=record;else data.metricHistory.push(record);editingMeasureIndex=null;save();renderMetricKpis();renderChart(activeChart);alert(idx>=0?'Замер обновлён':'Новый замер сохранён')};
 document.querySelector('#editStartBtn').onclick=()=>{let v=prompt('Дата старта челленджа (ГГГГ-ММ-ДД):',data.startDate);if(/^\d{4}-\d{2}-\d{2}$/.test(v||'')&&!Number.isNaN(new Date(v+'T00:00:00').getTime())){data.startDate=v;save();render()}else if(v!==null)alert('Дата должна быть в формате ГГГГ-ММ-ДД')};
 document.querySelector('#todayLabel').textContent=new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
-render();
 const menuBtn=document.querySelector('#menuBtn'),sidebar=document.querySelector('#sidebar'),overlay=document.querySelector('#sidebarOverlay');
 function closeMenu(){sidebar.classList.remove('open');overlay.classList.remove('open')}
 menuBtn.onclick=()=>{sidebar.classList.toggle('open');overlay.classList.toggle('open')};overlay.onclick=closeMenu;
@@ -91,6 +90,7 @@ document.querySelectorAll('.side-nav a').forEach(a=>a.addEventListener('click',c
 const observed=['dashboard','pushups','analytics','transformation','modules'];window.addEventListener('scroll',()=>{let active='dashboard';for(const id of observed){const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<180)active=id}document.querySelectorAll('.nav-link').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active))});
 
 let activeChart='reps';
+render();
 function longestStreak(){let best=0,s=0;for(let d=1;d<=360;d++){if(data.done[d]){s++;best=Math.max(best,s)}else s=0}return best}
 function renderGame(){
  const completed=elapsedDoneCount(), total=Object.entries(data.reps).filter(([d])=>+d>=1&&+d<=360).reduce((a,[,b])=>a+(Number.isFinite(+b)&&+b>0?+b:0),0), xp=completed*100+Math.floor(total/10), level=Math.floor(xp/500)+1, into=xp%500;
