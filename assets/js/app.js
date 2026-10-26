@@ -12,8 +12,7 @@ if(!data.startDate){
 if(!data.metricHistory)data.metricHistory=[];
 if(!data.bestStreak)data.bestStreak=0;
 if(!data.sessions)data.sessions={};
-const save=()=>{data.schemaVersion=2;localStorage.setItem(KEY,JSON.stringify(data))};
-save();
+const save=()=>{data.schemaVersion=3;localStorage.setItem(KEY,JSON.stringify(data))};
 const target=d=>plan[Math.min(35,Math.floor((d-1)/10))];
 const doneCount=()=>Object.entries(data.done).filter(([d,v])=>v&&+d>=1&&+d<=360).length;
 const elapsedDoneCount=()=>Object.entries(data.done).filter(([d,v])=>v&&+d>=1&&+d<=current()).length;
@@ -61,7 +60,7 @@ function render(){
 function calcStreak(){let s=0,cur=current();for(let d=cur;d>=1;d--){if(data.done[d])s++;else if(d===cur)continue;else break}return s}
 function historyRow(d){let s=data.sessions[d],detail=s&&s.sets?.length?`${s.sets.length} подх. • ${s.difficulty?'сложность '+s.difficulty+'/5':'без оценки'}`:'быстрая запись';return `<div class="history-row clickable" data-history-day="${d}"><span class="history-status ${data.done[d]?'ok':''}">${data.done[d]?'✓':'•'}</span><div><b>День ${d}</b><small>${fmtLong(dayDate(d))} • ${detail}</small></div><div><span>Цель</span><b>${target(d)}</b></div><div><span>Факт</span><b>${data.reps[d]||0}</b></div></div>`}
 function bindHistoryRows(root=document){root.querySelectorAll('[data-history-day]').forEach(r=>r.onclick=()=>{closeHistory();openDayEditor(+r.dataset.historyDay)})}
-function renderHistory(){const box=document.querySelector('#historyList');let rows=[];for(let d=360;d>=1&&rows.length<8;d--)if(data.done[d]||data.reps[d])rows.push(historyRow(d))}box.innerHTML=rows.length?rows.join(''):'<div class="empty-history">Здесь появятся завершённые тренировки. Первый день — начало истории.</div>';bindHistoryRows(box)}
+function renderHistory(){const box=document.querySelector('#historyList');let rows=[];for(let d=360;d>=1&&rows.length<8;d--){if(data.done[d]||data.reps[d])rows.push(historyRow(d))}box.innerHTML=rows.length?rows.join(''):'<div class="empty-history">Здесь появятся завершённые тренировки. Первый день — начало истории.</div>';bindHistoryRows(box)}
 function renderMetricKpis(){let hist=data.metricHistory||[],last=hist.at(-1)||data.metrics||{},first=hist[0]||last;document.querySelector('#weightKpi').textContent=last.weight?last.weight+' кг':'—';document.querySelector('#maxKpi').textContent=last.maxSet||'—';let delta=(last.weight&&first.weight)?(+last.weight-+first.weight):null;document.querySelector('#weightDelta').textContent=delta===null?'—':(delta>0?'+':'')+delta.toFixed(1)+' кг'}
 document.querySelector('#plusBtn').onclick=()=>document.querySelector('#todayInput').value=(+document.querySelector('#todayInput').value||0)+5;
 document.querySelector('#minusBtn').onclick=()=>document.querySelector('#todayInput').value=Math.max(0,(+document.querySelector('#todayInput').value||0)-5);
@@ -84,7 +83,7 @@ let activeChart='reps';
 function longestStreak(){let best=0,s=0;for(let d=1;d<=360;d++){if(data.done[d]){s++;best=Math.max(best,s)}else s=0}return best}
 function renderGame(){
  const completed=elapsedDoneCount(), total=Object.entries(data.reps).filter(([d])=>+d>=1&&+d<=360).reduce((a,[,b])=>a+(Number.isFinite(+b)&&+b>0?+b:0),0), xp=completed*100+Math.floor(total/10), level=Math.floor(xp/500)+1, into=xp%500;
- data.bestStreak=Math.max(data.bestStreak||0,longestStreak());save();
+ data.bestStreak=Math.max(data.bestStreak||0,longestStreak());
  const elapsed=Math.max(1,current()), rate=Math.round(completed/elapsed*100),best=Math.max(0,...Object.entries(data.reps).filter(([d])=>+d>=1&&+d<=360).map(([,v])=>+v||0));
  document.querySelector('#gameLevel').textContent=level;document.querySelector('#xpNow').textContent=into;document.querySelector('#xpNext').textContent=500;document.querySelector('#xpBar').style.width=(into/5)+'%';
  document.querySelector('#bestStreak').textContent=data.bestStreak+' дней';document.querySelector('#bestDay').textContent=best.toLocaleString('ru');document.querySelector('#completionRate').textContent=Math.min(100,rate)+'%';
