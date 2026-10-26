@@ -15,14 +15,16 @@ const doneCount=()=>Object.entries(data.done).filter(([d,v])=>v&&+d>=1&&+d<=360)
 const elapsedDoneCount=()=>Object.entries(data.done).filter(([d,v])=>v&&+d>=1&&+d<=current()).length;
 const current=()=>{const start=new Date(data.startDate+'T00:00:00');if(Number.isNaN(start.getTime()))return 1;return Math.min(360,Math.max(1,Math.floor((new Date().setHours(0,0,0,0)-start.getTime())/86400000)+1))};
 const dayDate=d=>{const x=new Date(data.startDate+'T00:00:00');x.setDate(x.getDate()+d-1);return x};
+const fullPlanReps=()=>Array.from({length:360},(_,i)=>target(i+1)).reduce((a,b)=>a+b,0);
+const actualReps=()=>Object.entries(data.reps).filter(([d])=>+d>=1&&+d<=360).reduce((a,[,v])=>a+(+v||0),0);
 const fmt=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
 const fmtLong=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
 function render(){
- const cur=current(),pct=Math.round(elapsedDoneCount()/360*100),t=target(cur);
+ const cur=current(),pct=Math.round(elapsedDoneCount()/360*100),t=target(cur),volume=actualReps(),planTotal=fullPlanReps(),volumePct=Math.min(100,volume/planTotal*100);
  document.querySelector('#yearPct').textContent=pct+'%';document.querySelector('#yearRing').style.background='conic-gradient(var(--accent) '+pct*3.6+'deg,#242a31 0deg)';
  document.querySelector('#streak').textContent=calcStreak()+' дней';document.querySelector('#totalReps').textContent=Object.values(data.reps).reduce((a,b)=>a+(+b||0),0).toLocaleString('ru');
  document.querySelector('#currentDay').textContent=cur+' / 360';document.querySelector('#todayTarget').textContent=t;document.querySelector('#levelNo').textContent=Math.floor((cur-1)/10)+1;
- document.querySelector('#overallBar').style.width=pct+'%';document.querySelector('#sideBar').style.width=pct+'%';document.querySelector('#sidePct').textContent=pct+'%';document.querySelector('#todayInput').value=data.reps[cur]||0;
+ document.querySelector('#overallBar').style.width=volumePct+'%';document.querySelector('#volumeDone').textContent=volume.toLocaleString('ru');document.querySelector('#volumePlan').textContent=planTotal.toLocaleString('ru');document.querySelector('#volumePct').textContent=volumePct.toFixed(volumePct<1?2:1)+'% выполнено';document.querySelector('#sideBar').style.width=pct+'%';document.querySelector('#sidePct').textContent=pct+'%';document.querySelector('#todayInput').value=data.reps[cur]||0;
  document.querySelector('#todayLabel').textContent=fmtLong(dayDate(cur))+' • День '+cur+' из 360';
  document.querySelector('#startDateLabel').textContent=fmtLong(dayDate(1));document.querySelector('#finishDateLabel').textContent=fmtLong(dayDate(360));
  document.querySelector('#planReps').textContent=Array.from({length:cur},(_,i)=>i+1).filter(d=>data.done[d]).reduce((a,d)=>a+target(d),0).toLocaleString('ru');
@@ -33,9 +35,8 @@ function render(){
  el.innerHTML=`<div class="month-head"><b>Месяц ${m}</b><span>${completed}/30 • ${target(a)}→${target(b)}</span></div><div class="days">${ds}</div>`;box.appendChild(el)}
  document.querySelectorAll('.day').forEach(x=>{
  x.onclick=()=>{let d=+x.dataset.day;if(d>current())return;
-   if(!data.done[d]){data.done[d]=true;if(!(+data.reps[d]>0))data.reps[d]=target(d)}
-   else{data.done[d]=false;delete data.reps[d];delete data.sessions[d]}
-   save();render()
+   if(!data.done[d]){data.done[d]=true;if(!(+data.reps[d]>0))data.reps[d]=target(d);save();render()}
+   else openDayEditor(d)
  };
  x.oncontextmenu=e=>{e.preventDefault();let d=+x.dataset.day;if(d<=current())openDayEditor(d)}
 });
@@ -112,13 +113,24 @@ document.querySelectorAll('[data-rest]').forEach(b=>b.onclick=()=>{if(timerId)re
 document.querySelector('#timerBtn').onclick=()=>{const btn=document.querySelector('#timerBtn');if(timerId){clearInterval(timerId);timerId=null;restLeft=restSeconds;btn.textContent='▶ Старт';paintTimer();return}restLeft=restSeconds;paintTimer();btn.textContent='■ Стоп';timerId=setInterval(()=>{restLeft--;paintTimer();if(restLeft<=0){clearInterval(timerId);timerId=null;btn.textContent='▶ Старт';restLeft=restSeconds;setTimeout(paintTimer,800)}},1000)};
 paintTimer();
 
+let editingDay=null;
 function openDayEditor(d){
- const oldVal=+data.reps[d]||target(d);
- const raw=prompt(`${fmtLong(dayDate(d))} • День ${d}\nПлан: ${target(d)}\n\nСколько отжиманий фактически сделано?\n(Оставь ${oldVal}, если всё верно)`,String(oldVal));
- if(raw===null)return;
- const v=Math.floor(Number(String(raw).replace(',','.')));
- if(!Number.isFinite(v)||v<0||v>5000){alert('Введи корректное количество отжиманий.');return}
- if(v===0){data.done[d]=false;delete data.reps[d];delete data.sessions[d]}
- else{data.reps[d]=v;data.done[d]=true;const s=getSession(d);if(!s.sets.length)s.sets=[v];s.finishedAt=s.finishedAt||new Date().toISOString()}
- save();render();
+ editingDay=d;const s=getSession(d);
+ document.querySelector('#editDayTitle').textContent='День '+d;
+ document.querySelector('#editDayDate').textContent=fmtLong(dayDate(d));
+ document.querySelector('#editDayTarget').textContent=target(d);
+ document.querySelector('#editDayReps').value=data.reps[d]||target(d);
+ document.querySelector('#editDaySets').value=(s.sets||[]).join(', ');
+ document.querySelector('#editDayDifficulty').value=s.difficulty||'';
+ document.querySelector('#editDayFeeling').value=s.feeling||'';
+ document.querySelector('#editDayNote').value=s.note||'';
+ document.querySelector('#dayModal').classList.add('open');document.body.classList.add('modal-open');
 }
+function closeDayEditor(){document.querySelector('#dayModal').classList.remove('open');document.body.classList.remove('modal-open');editingDay=null}
+document.querySelector('#dayModalClose').onclick=closeDayEditor;document.querySelector('#dayModalBackdrop').onclick=closeDayEditor;
+document.querySelector('#saveDayBtn').onclick=()=>{if(!editingDay)return;const d=editingDay,reps=Math.max(0,Math.floor(+document.querySelector('#editDayReps').value||0)),raw=document.querySelector('#editDaySets').value.trim();
+ const sets=raw?raw.split(/[,;+ ]+/).map(Number).filter(v=>Number.isFinite(v)&&v>0).map(Math.floor):[];
+ const setSum=sets.reduce((a,b)=>a+b,0),finalReps=sets.length?setSum:reps;if(finalReps<=0){alert('Укажи количество отжиманий или подходы.');return}
+ data.reps[d]=finalReps;data.done[d]=true;const s=getSession(d);s.sets=sets;s.difficulty=document.querySelector('#editDayDifficulty').value;s.feeling=document.querySelector('#editDayFeeling').value;s.note=document.querySelector('#editDayNote').value;s.finishedAt=s.finishedAt||new Date().toISOString();save();closeDayEditor();render()};
+document.querySelector('#deleteDayBtn').onclick=()=>{if(!editingDay||!confirm('Удалить запись этой тренировки?'))return;const d=editingDay;delete data.done[d];delete data.reps[d];delete data.sessions[d];save();closeDayEditor();render()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editingDay)closeDayEditor()});
