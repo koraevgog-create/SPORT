@@ -20,11 +20,11 @@ const actualReps=()=>Object.entries(data.reps).filter(([d])=>+d>=1&&+d<=360).red
 const fmt=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
 const fmtLong=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
 function render(){
- const cur=current(),pct=Math.round(elapsedDoneCount()/360*100),t=target(cur),volume=actualReps(),planTotal=fullPlanReps(),volumePct=Math.min(100,volume/planTotal*100);
+ const cur=current(),pct=Math.round(elapsedDoneCount()/360*100),t=target(cur),volume=actualReps(),planTotal=fullPlanReps(),progressionPct=Math.max(0,Math.min(100,(t-30)/(500-30)*100));
  document.querySelector('#yearPct').textContent=pct+'%';document.querySelector('#yearRing').style.background='conic-gradient(var(--accent) '+pct*3.6+'deg,#242a31 0deg)';
  document.querySelector('#streak').textContent=calcStreak()+' дней';document.querySelector('#totalReps').textContent=Object.values(data.reps).reduce((a,b)=>a+(+b||0),0).toLocaleString('ru');
  document.querySelector('#currentDay').textContent=cur+' / 360';document.querySelector('#todayTarget').textContent=t;document.querySelector('#levelNo').textContent=Math.floor((cur-1)/10)+1;
- document.querySelector('#overallBar').style.width=volumePct+'%';document.querySelector('#volumeDone').textContent=volume.toLocaleString('ru');document.querySelector('#volumePlan').textContent=planTotal.toLocaleString('ru');document.querySelector('#volumePct').textContent=volumePct.toFixed(volumePct<1?2:1)+'% выполнено';document.querySelector('#sideBar').style.width=pct+'%';document.querySelector('#sidePct').textContent=pct+'%';document.querySelector('#todayInput').value=data.reps[cur]||0;
+ document.querySelector('#overallBar').style.width=progressionPct+'%';document.querySelector('#progressionMarker').style.left=progressionPct+'%';document.querySelector('#progressionCurrent').textContent=t;document.querySelector('#progressionPct').textContent=Math.round(progressionPct)+'% пути';document.querySelector('#sideBar').style.width=pct+'%';document.querySelector('#sidePct').textContent=pct+'%';document.querySelector('#todayInput').value=data.reps[cur]||0;
  document.querySelector('#todayLabel').textContent=fmtLong(dayDate(cur))+' • День '+cur+' из 360';
  document.querySelector('#startDateLabel').textContent=fmtLong(dayDate(1));document.querySelector('#finishDateLabel').textContent=fmtLong(dayDate(360));
  document.querySelector('#planReps').textContent=Array.from({length:cur},(_,i)=>i+1).filter(d=>data.done[d]).reduce((a,d)=>a+target(d),0).toLocaleString('ru');
