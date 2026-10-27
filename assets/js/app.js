@@ -215,7 +215,7 @@ function restoreKnownProgress(){
  data.startDate='2026-10-25';data.reps=data.reps||{};data.done=data.done||{};data.reps[1]=Math.max(+data.reps[1]||0,30);data.reps[2]=Math.max(+data.reps[2]||0,30);syncDayStatus(1);syncDayStatus(2);data.bestStreak=Math.max(+data.bestStreak||0,2);save();render();alert('Восстановлено: старт 25.10.2026, дни 1–2 по 30 отжиманий, всего 60. Замеры тела не изменялись.')
 }
 function restoreLocalBackup(){const raw=localStorage.getItem(BACKUP_KEY);if(!raw){alert('Локальной резервной копии пока нет.');return}if(!confirm('Восстановить предыдущую локальную версию данных? Текущее состояние будет сохранено как новая резервная копия.'))return;try{const currentRaw=localStorage.getItem(KEY)||'',old=JSON.parse(raw);if(!old||typeof old!=='object')throw new Error();localStorage.setItem(KEY,raw);if(currentRaw)localStorage.setItem(BACKUP_KEY,currentRaw);location.reload()}catch(e){alert('Резервная копия повреждена.')}}
-const restoreBtn=document.querySelector('#restoreBackup');if(restoreBtn)restoreBtn.onclick=restoreLocalBackup;
+const restoreBtn=document.querySelector('#restoreBackup');if(restoreBtn)restoreBtn.onclick=restoreLocalBackup;const restoreKnownBtn=document.querySelector('#restoreKnown');if(restoreKnownBtn)restoreKnownBtn.onclick=restoreKnownProgress;
 
 // Boot only after every constant, function and event handler is initialized.
 render();
