@@ -1,7 +1,12 @@
 const plan=[30,40,50,...Array.from({length:30},(_,i)=>60+i*15),500,500,500];
-const KEY='sport-v1';
-let data;
-try{data=JSON.parse(localStorage.getItem(KEY)||'{"done":{},"reps":{},"metrics":{}}')}catch(e){data={done:{},reps:{},metrics:{}}}
+const KEY='sport-v1',BACKUP_KEY='sport-v1-backup',BACKUP_KEYS=['sport-v1-backup','sport-v1-backup-2','sport-v1-backup-3'];
+const emptyData=()=>({done:{},reps:{},metrics:{},metricHistory:[],sessions:{}});
+const safeParse=raw=>{try{const x=JSON.parse(raw||'');return x&&typeof x==='object'?x:null}catch(e){return null}};
+const dataScore=x=>{if(!x||typeof x!=='object')return -1;const reps=x.reps&&typeof x.reps==='object'?Object.keys(x.reps).length:0,done=x.done&&typeof x.done==='object'?Object.values(x.done).filter(Boolean).length:0,measures=Array.isArray(x.metricHistory)?x.metricHistory.length:0,sessions=x.sessions&&typeof x.sessions==='object'?Object.keys(x.sessions).length:0;return reps*100+done*20+measures*10+sessions*5+(x.startDate?1:0)};
+const primary=safeParse(localStorage.getItem(KEY)),candidates=[{key:KEY,value:primary},...BACKUP_KEYS.map(key=>({key,value:safeParse(localStorage.getItem(key))}))].filter(x=>x.value);
+candidates.sort((a,b)=>dataScore(b.value)-dataScore(a.value));
+let data=(primary&&dataScore(primary)>=dataScore(candidates[0]?.value)?primary:candidates[0]?.value)||emptyData();
+const recoveredFromBackup=!!(candidates[0]&&candidates[0].key!==KEY&&dataScore(candidates[0].value)>dataScore(primary));
 data.done=data.done&&typeof data.done==='object'?data.done:{};
 data.reps=data.reps&&typeof data.reps==='object'?data.reps:{};
 data.metrics=data.metrics&&typeof data.metrics==='object'?data.metrics:{};
@@ -17,8 +22,7 @@ if(!data.bestStreak)data.bestStreak=0;
 if(!data.sessions)data.sessions={};
 let editingMeasureIndex=null;
 const localDateKey=()=>{const d=new Date(),o=d.getTimezoneOffset();return new Date(d.getTime()-o*60000).toISOString().slice(0,10)};
-const BACKUP_KEY='sport-v1-backup';
-const save=()=>{try{const old=localStorage.getItem(KEY);if(old)localStorage.setItem(BACKUP_KEY,old)}catch(e){}data.schemaVersion=4;localStorage.setItem(KEY,JSON.stringify(data))};
+const save=()=>{try{const old=localStorage.getItem(KEY);if(old){const b1=localStorage.getItem(BACKUP_KEYS[0]),b2=localStorage.getItem(BACKUP_KEYS[1]);if(b2)localStorage.setItem(BACKUP_KEYS[2],b2);if(b1)localStorage.setItem(BACKUP_KEYS[1],b1);localStorage.setItem(BACKUP_KEYS[0],old)}}catch(e){}data.schemaVersion=5;localStorage.setItem(KEY,JSON.stringify(data))};
 const elapsedDays=()=>{const start=new Date(data.startDate+'T00:00:00'),today=new Date();today.setHours(0,0,0,0);if(Number.isNaN(start.getTime()))return 1;return Math.min(360,Math.max(1,Math.floor((today-start)/86400000)+1))};
 const calendarPct=()=>Math.min(100,elapsedDays()/360*100);
 const target=d=>plan[Math.min(35,Math.floor((d-1)/10))];
@@ -210,3 +214,4 @@ const restoreBtn=document.querySelector('#restoreBackup');if(restoreBtn)restoreB
 
 // Boot only after every constant, function and event handler is initialized.
 render();
+if(recoveredFromBackup){setTimeout(()=>alert('SPORT обнаружил более полную резервную копию и показал её вместо пустой основной базы. Ничего не перезаписано. Нажми «Записать результат» или сохрани любой замер, чтобы закрепить восстановленные данные.'),50)}
