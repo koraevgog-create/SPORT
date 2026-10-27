@@ -47,7 +47,7 @@ const fmt=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
 const fmtLong=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
 function render(){
  const cur=current(),pct=Math.round(calendarPct()),completionPct=Math.round(elapsedDoneCount()/Math.max(1,elapsedDays())*100),t=target(cur),volume=actualReps(),planTotal=fullPlanReps(),completedDays=Object.entries(data.done).filter(([d,v])=>v&&+d>=1&&+d<=360).map(([d])=>+d),furthestDone=completedDays.length?Math.max(...completedDays):0,achievedTarget=furthestDone?target(furthestDone):30,progressionPct=furthestDone?Math.max(0,Math.min(100,furthestDone/360*100)):0;
- document.querySelector('#yearPct').textContent=pct+'%';document.querySelector('#yearRing').style.background='conic-gradient(var(--accent) '+pct*3.6+'deg,#242a31 0deg)';
+ document.querySelector('#yearPct').textContent=pct+'%';document.querySelector('#yearRing').style.setProperty('--ring-deg',(pct*3.6)+'deg');document.querySelector('#yearRing').style.background='conic-gradient(var(--accent) '+pct*3.6+'deg,#242a31 0deg)';
  document.querySelector('#streak').textContent=calcStreak()+' дней';document.querySelector('#totalReps').textContent=Object.values(data.reps).reduce((a,b)=>a+(+b||0),0).toLocaleString('ru');
  document.querySelector('#currentDay').textContent=cur+' / 360';document.querySelector('#todayTarget').textContent=t;document.querySelector('#levelNo').textContent=Math.floor((cur-1)/10)+1;
  const overallBar=document.querySelector('#overallBar'),progressionMarker=document.querySelector('#progressionMarker'),progressionCurrent=document.querySelector('#progressionCurrent'),progressionLabel=document.querySelector('#progressionPct');
