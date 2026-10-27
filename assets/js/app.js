@@ -22,7 +22,7 @@ if(!data.bestStreak)data.bestStreak=0;
 if(!data.sessions)data.sessions={};
 let editingMeasureIndex=null;
 const localDateKey=()=>{const d=new Date(),o=d.getTimezoneOffset();return new Date(d.getTime()-o*60000).toISOString().slice(0,10)};
-const save=()=>{try{const old=localStorage.getItem(KEY);if(old){const b1=localStorage.getItem(BACKUP_KEYS[0]),b2=localStorage.getItem(BACKUP_KEYS[1]);if(b2)localStorage.setItem(BACKUP_KEYS[2],b2);if(b1)localStorage.setItem(BACKUP_KEYS[1],b1);localStorage.setItem(BACKUP_KEYS[0],old)}}catch(e){}data.schemaVersion=5;localStorage.setItem(KEY,JSON.stringify(data))};
+const save=()=>{try{const old=localStorage.getItem(KEY),oldData=safeParse(old);if(old&&dataScore(oldData)>1){const b1=localStorage.getItem(BACKUP_KEYS[0]),b2=localStorage.getItem(BACKUP_KEYS[1]);if(b2&&dataScore(safeParse(b2))>1)localStorage.setItem(BACKUP_KEYS[2],b2);if(b1&&dataScore(safeParse(b1))>1)localStorage.setItem(BACKUP_KEYS[1],b1);localStorage.setItem(BACKUP_KEYS[0],old)}}catch(e){}data.schemaVersion=6;localStorage.setItem(KEY,JSON.stringify(data))};
 const elapsedDays=()=>{const start=new Date(data.startDate+'T00:00:00'),today=new Date();today.setHours(0,0,0,0);if(Number.isNaN(start.getTime()))return 1;return Math.min(360,Math.max(1,Math.floor((today-start)/86400000)+1))};
 const calendarPct=()=>Math.min(100,elapsedDays()/360*100);
 const target=d=>plan[Math.min(35,Math.floor((d-1)/10))];
@@ -209,6 +209,11 @@ document.querySelector('#importData').onchange=e=>{const file=e.target.files?.[0
 function paintSetsMismatch(){const e=document.querySelector('#setsMismatch');if(!e)return;const raw=document.querySelector('#editDaySets').value.trim(),sets=raw?raw.split(/[,;+ ]+/).map(Number).filter(v=>Number.isFinite(v)&&v>0):[],sum=sets.reduce((a,b)=>a+b,0),fact=+document.querySelector('#editDayReps').value||0;e.textContent=sets.length?(sum===fact?'Сумма подходов совпадает: '+sum:'Сумма подходов: '+sum+(fact?' • факт: '+fact:'')):'';e.classList.toggle('warn',!!sets.length&&!!fact&&sum!==fact)}
 document.querySelector('#editDaySets').addEventListener('input',paintSetsMismatch);document.querySelector('#editDayReps').addEventListener('input',paintSetsMismatch);
 
+function restoreKnownProgress(){
+ const hasUserProgress=dataScore(data)>1;
+ if(hasUserProgress&&!confirm('В SPORT уже есть данные. Добавить известный прогресс 25–26 октября поверх текущих записей?'))return;
+ data.startDate='2026-10-25';data.reps=data.reps||{};data.done=data.done||{};data.reps[1]=Math.max(+data.reps[1]||0,30);data.reps[2]=Math.max(+data.reps[2]||0,30);syncDayStatus(1);syncDayStatus(2);data.bestStreak=Math.max(+data.bestStreak||0,2);save();render();alert('Восстановлено: старт 25.10.2026, дни 1–2 по 30 отжиманий, всего 60. Замеры тела не изменялись.')
+}
 function restoreLocalBackup(){const raw=localStorage.getItem(BACKUP_KEY);if(!raw){alert('Локальной резервной копии пока нет.');return}if(!confirm('Восстановить предыдущую локальную версию данных? Текущее состояние будет сохранено как новая резервная копия.'))return;try{const currentRaw=localStorage.getItem(KEY)||'',old=JSON.parse(raw);if(!old||typeof old!=='object')throw new Error();localStorage.setItem(KEY,raw);if(currentRaw)localStorage.setItem(BACKUP_KEY,currentRaw);location.reload()}catch(e){alert('Резервная копия повреждена.')}}
 const restoreBtn=document.querySelector('#restoreBackup');if(restoreBtn)restoreBtn.onclick=restoreLocalBackup;
 
